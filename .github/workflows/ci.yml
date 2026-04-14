@@ -11,14 +11,8 @@ on:
     branches:
       - main
       - dev
-      - "release/**"
-      - "hotfix/**"
-  push:
-    branches:
-      - main
-      - dev
-      - "release/**"
-      - "hotfix/**"
+      - 'release/**'
+      - 'hotfix/**'
 
 permissions:
   contents: read
@@ -73,9 +67,9 @@ jobs:
       fail-fast: false
       matrix:
         node:
-          - "18.18.0"
-          - "22"
-          - "24"
+          - '18.18.0'
+          - '22'
+          - '24'
 
     steps:
       - name: Checkout
