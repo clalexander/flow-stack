@@ -125,6 +125,15 @@ export function NavigationStackViewport(
   const activeTransitionRef = useRef<NavigationTransitionRuntimeState | null>(
     null,
   );
+  // Latest-ref pattern: these are updated every render so effects that fire
+  // on a single dep (activeIndex / isTransitioning) always see the current values
+  // without needing them in the dependency array.
+  const lastActionRef = useRef(state.lastAction);
+  lastActionRef.current = state.lastAction;
+  const propsRef = useRef(props);
+  propsRef.current = props;
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const anchor = props.anchor ?? 'left';
   const { orientation: anchorOrientation, direction: anchorDirection } =
@@ -133,18 +142,19 @@ export function NavigationStackViewport(
   const reducedMotion = props.reducedMotion ?? 'system';
   const mountStrategy = props.mountStrategy ?? 'active-only';
   const overflowBehavior = props.overflowBehavior ?? 'clip';
+  const { stackId } = controller;
 
   useEffect(() => {
-    if (props.autoFocus === false) {
+    if (propsRef.current.autoFocus === false) {
       return;
     }
 
     const isBackward =
-      state.lastAction?.type === 'pop' ||
-      state.lastAction?.type === 'popTo' ||
-      state.lastAction?.type === 'popToRoot';
+      lastActionRef.current?.type === 'pop' ||
+      lastActionRef.current?.type === 'popTo' ||
+      lastActionRef.current?.type === 'popToRoot';
 
-    if (props.restoreFocusOnBack && isBackward) {
+    if (propsRef.current.restoreFocusOnBack && isBackward) {
       restoreNavigationFocus(containerRef.current);
     } else {
       applyNavigationFocus({
@@ -152,8 +162,7 @@ export function NavigationStackViewport(
         behavior: 'auto',
       });
     }
-    // state.lastAction is intentionally omitted: focus should only re-run on activeIndex change
-  }, [props.autoFocus, props.restoreFocusOnBack, state.activeIndex]);
+  }, [state.activeIndex]);
 
   const renderableEntries = useMemo(() => {
     if (state.entries.length === 0) {
@@ -193,29 +202,29 @@ export function NavigationStackViewport(
 
   useEffect(() => {
     const wasTransitioning = prevIsTransitioningRef.current;
-    prevIsTransitioningRef.current = state.isTransitioning;
+    prevIsTransitioningRef.current = stateRef.current.isTransitioning;
 
-    if (state.isTransitioning && !wasTransitioning && state.transition) {
-      activeTransitionRef.current = state.transition;
-      props.onTransitionStart?.({
-        stackId: controller.stackId,
-        transition: state.transition,
-        state,
+    if (stateRef.current.isTransitioning && !wasTransitioning && stateRef.current.transition) {
+      activeTransitionRef.current = stateRef.current.transition;
+      propsRef.current.onTransitionStart?.({
+        stackId,
+        transition: stateRef.current.transition,
+        state: stateRef.current,
       });
     } else if (
-      !state.isTransitioning &&
+      !stateRef.current.isTransitioning &&
       wasTransitioning &&
       activeTransitionRef.current
     ) {
       const transition = activeTransitionRef.current;
       activeTransitionRef.current = null;
-      props.onTransitionEnd?.({
-        stackId: controller.stackId,
+      propsRef.current.onTransitionEnd?.({
+        stackId,
         transition,
-        state,
+        state: stateRef.current,
       });
     }
-  }, [state.isTransitioning]);
+  }, [state.isTransitioning, stackId]);
 
   const viewportContextValue = useMemo(
     () => ({

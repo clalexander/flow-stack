@@ -83,10 +83,16 @@ export interface NavigationRouteDefinition<
 }
 
 export type NavigationRouteRegistry =
+  // `any` is required here: NavigationRouteDefinition is invariant in TParams due to
+  // contravariant function parameters (getId, canEnter, canLeave). Using NavigationParams
+  // would reject user-supplied routes with narrower param types (e.g. { userId: number }).
+  // This is the standard TypeScript widening escape hatch for mixed-type registries.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   | readonly NavigationRouteDefinition<NavigationRouteName, any>[]
   | Readonly<
       Record<
         NavigationRouteName,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         NavigationRouteDefinition<NavigationRouteName, any>
       >
     >;

@@ -3,6 +3,7 @@ import {
   type ReactElement,
   type ReactNode,
   isValidElement,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -185,6 +186,323 @@ function buildResolvedEntry(
   };
 }
 
+interface ActionResult {
+  nextState: NavigationStackState;
+  nextEntry: NavigationEntry | null;
+  nextRoute: NavigationRouteDefinition | null;
+}
+
+function computePushAction(
+  currentState: NavigationStackState,
+  action: Extract<NavigationAction, { type: 'push' }>,
+  routes: Readonly<Record<string, NavigationRouteDefinition>>,
+  stackId: NavigationStackId,
+  maxDepth: number | undefined,
+  routeKeyResolver: NavigationRouteKeyResolver | undefined,
+): ActionResult | 'blocked' {
+  if (maxDepth && currentState.entries.length >= maxDepth) {
+    return 'blocked';
+  }
+  const nextEntry = buildResolvedEntry(
+    stackId,
+    routes,
+    currentState.entries,
+    action.route,
+    action.params,
+    routeKeyResolver,
+  );
+  const nextRoute = resolveRouteDefinition(routes, nextEntry.routeName);
+  const nextState: NavigationStackState = {
+    ...currentState,
+    entries: [
+      ...currentState.entries.map((entry: NavigationEntry) => ({
+        ...entry,
+        state: 'inactive' as const,
+      })),
+      { ...nextEntry, state: 'entering' as const },
+    ],
+    activeIndex: currentState.entries.length,
+    lastAction: action,
+    isTransitioning: true,
+    transition: null,
+  };
+  return { nextState, nextEntry, nextRoute };
+}
+
+function computeReplaceAction(
+  currentState: NavigationStackState,
+  action: Extract<NavigationAction, { type: 'replace' }>,
+  routes: Readonly<Record<string, NavigationRouteDefinition>>,
+  stackId: NavigationStackId,
+  routeKeyResolver: NavigationRouteKeyResolver | undefined,
+): ActionResult {
+  const nextEntry = buildResolvedEntry(
+    stackId,
+    routes,
+    currentState.entries,
+    action.route,
+    action.params,
+    routeKeyResolver,
+  );
+  const nextRoute = resolveRouteDefinition(routes, nextEntry.routeName);
+  if (currentState.entries.length === 0) {
+    return {
+      nextState: {
+        ...currentState,
+        entries: [{ ...nextEntry, state: 'entering' }],
+        activeIndex: 0,
+        lastAction: action,
+        isTransitioning: true,
+        transition: null,
+      },
+      nextEntry,
+      nextRoute,
+    };
+  }
+  const entries = [...currentState.entries];
+  const { activeIndex } = currentState;
+  entries[activeIndex] = { ...nextEntry, state: 'entering' };
+  return {
+    nextState: {
+      ...currentState,
+      entries: entries.map((entry: NavigationEntry, index: number) => ({
+        ...entry,
+        state: index === activeIndex ? 'entering' : 'inactive',
+      })),
+      activeIndex,
+      lastAction: action,
+      isTransitioning: true,
+      transition: null,
+    },
+    nextEntry,
+    nextRoute,
+  };
+}
+
+function computePopAction(
+  currentState: NavigationStackState,
+  action: Extract<NavigationAction, { type: 'pop' }>,
+  routes: Readonly<Record<string, NavigationRouteDefinition>>,
+): ActionResult | null {
+  if (currentState.entries.length <= 1 || currentState.activeIndex <= 0) {
+    return null;
+  }
+  const count = Math.max(1, action.count ?? 1);
+  const nextIndex = Math.max(0, currentState.activeIndex - count);
+  const nextEntry = currentState.entries[nextIndex] ?? null;
+  const nextRoute = nextEntry
+    ? resolveRouteDefinition(routes, nextEntry.routeName)
+    : null;
+  const nextState: NavigationStackState = {
+    ...currentState,
+    entries: currentState.entries.map(
+      (entry: NavigationEntry, index: number) => {
+        if (index === nextIndex)
+          return { ...entry, state: 'entering' as const };
+        if (index === currentState.activeIndex)
+          return { ...entry, state: 'exiting' as const };
+        return { ...entry, state: 'inactive' as const };
+      },
+    ),
+    activeIndex: nextIndex,
+    lastAction: action,
+    isTransitioning: true,
+    transition: null,
+  };
+  return { nextState, nextEntry, nextRoute };
+}
+
+function computePopToRootAction(
+  currentState: NavigationStackState,
+  action: Extract<NavigationAction, { type: 'popToRoot' }>,
+  routes: Readonly<Record<string, NavigationRouteDefinition>>,
+): ActionResult | null {
+  if (currentState.entries.length <= 1 || currentState.activeIndex <= 0) {
+    return null;
+  }
+  const nextEntry = currentState.entries[0] ?? null;
+  const nextRoute = nextEntry
+    ? resolveRouteDefinition(routes, nextEntry.routeName)
+    : null;
+  const nextState: NavigationStackState = {
+    ...currentState,
+    entries: currentState.entries.map(
+      (entry: NavigationEntry, index: number) => {
+        if (index === 0) return { ...entry, state: 'entering' as const };
+        if (index === currentState.activeIndex)
+          return { ...entry, state: 'exiting' as const };
+        return { ...entry, state: 'inactive' as const };
+      },
+    ),
+    activeIndex: 0,
+    lastAction: action,
+    isTransitioning: true,
+    transition: null,
+  };
+  return { nextState, nextEntry, nextRoute };
+}
+
+function computePopToAction(
+  currentState: NavigationStackState,
+  action: Extract<NavigationAction, { type: 'popTo' }>,
+  routes: Readonly<Record<string, NavigationRouteDefinition>>,
+): ActionResult | null {
+  const index = currentState.entries.findIndex(
+    (entry: NavigationEntry, entryIndex: number) =>
+      matchesNavigationEntry(
+        action.matcher,
+        entry,
+        entryIndex,
+        currentState.entries,
+      ),
+  );
+  if (index < 0 || index === currentState.activeIndex) {
+    return null;
+  }
+  const nextEntry = currentState.entries[index] ?? null;
+  const nextRoute = nextEntry
+    ? resolveRouteDefinition(routes, nextEntry.routeName)
+    : null;
+  const nextState: NavigationStackState = {
+    ...currentState,
+    entries: currentState.entries.map(
+      (entry: NavigationEntry, entryIndex: number) => {
+        if (entryIndex === index)
+          return { ...entry, state: 'entering' as const };
+        if (entryIndex === currentState.activeIndex)
+          return { ...entry, state: 'exiting' as const };
+        return { ...entry, state: 'inactive' as const };
+      },
+    ),
+    activeIndex: index,
+    lastAction: action,
+    isTransitioning: true,
+    transition: null,
+  };
+  return { nextState, nextEntry, nextRoute };
+}
+
+function computeResetAction(
+  currentState: NavigationStackState,
+  action: Extract<NavigationAction, { type: 'reset' }>,
+  routes: Readonly<Record<string, NavigationRouteDefinition>>,
+  currentEntry: NavigationEntry | null,
+): ActionResult {
+  let nextState = createInitialState({
+    routes,
+    initialEntries: action.entries,
+  });
+  const nextEntry = nextState.entries[nextState.activeIndex] ?? null;
+  const nextRoute = nextEntry
+    ? resolveRouteDefinition(routes, nextEntry.routeName)
+    : null;
+  nextState = {
+    ...nextState,
+    lastAction: action,
+    isTransitioning: Boolean(currentEntry && nextEntry),
+    transition: null,
+  };
+  if (nextState.isTransitioning) {
+    nextState = {
+      ...nextState,
+      entries: nextState.entries.map(
+        (entry: NavigationEntry, index: number) => ({
+          ...entry,
+          state: index === nextState.activeIndex ? 'entering' : 'inactive',
+        }),
+      ),
+    };
+  }
+  return { nextState, nextEntry, nextRoute };
+}
+
+function computeSetParamsAction(
+  currentState: NavigationStackState,
+  action: Extract<NavigationAction, { type: 'setParams' }>,
+  currentEntry: NavigationEntry | null,
+  currentRoute: NavigationRouteDefinition | null,
+): ActionResult | null {
+  if (!currentEntry) {
+    return null;
+  }
+  const entries = [...currentState.entries];
+  entries[currentState.activeIndex] = {
+    ...currentEntry,
+    params: mergeNavigationParams(currentEntry.params, action.params),
+  };
+  return {
+    nextState: {
+      ...currentState,
+      entries,
+      lastAction: action,
+      isTransitioning: false,
+      transition: null,
+    },
+    nextEntry: currentEntry,
+    nextRoute: currentRoute,
+  };
+}
+
+function computeDefaultAction(
+  currentState: NavigationStackState,
+  action: NavigationAction,
+  routes: Readonly<Record<string, NavigationRouteDefinition>>,
+): ActionResult {
+  const nextState = navigationReducer(currentState, action);
+  const nextEntry = nextState.entries[nextState.activeIndex] ?? null;
+  const nextRoute = nextEntry
+    ? resolveRouteDefinition(routes, nextEntry.routeName)
+    : null;
+  return { nextState, nextEntry, nextRoute };
+}
+
+function applyTransitionToState(
+  nextState: NavigationStackState,
+  action: NavigationAction,
+  currentEntry: NavigationEntry | null,
+  nextEntry: NavigationEntry | null,
+  nextRoute: NavigationRouteDefinition | null,
+  prevLastAction: NavigationAction | null,
+  stackId: NavigationStackId,
+  stackTransition: NavigationStackProviderBaseProps['transition'],
+  reducedMotion: NavigationReducedMotionPreference,
+): NavigationStackState {
+  const rawSpec = resolveTransition({
+    action,
+    fromEntry: currentEntry,
+    toEntry: nextEntry,
+    depth: nextState.entries.length,
+    anchor: 'auto',
+    orientation: 'auto',
+    presentation: resolvePresentation(nextRoute),
+    reducedMotion,
+    stackTransition,
+    routeTransition: nextRoute?.transition,
+    stackId,
+    lastAction: prevLastAction,
+  });
+  const spec = applyReducedMotionToTransition(rawSpec, reducedMotion);
+  const direction =
+    action.options?.direction ??
+    (action.type === 'pop' ||
+    action.type === 'popTo' ||
+    action.type === 'popToRoot'
+      ? 'backward'
+      : 'forward');
+  return {
+    ...nextState,
+    transition: createTransitionRuntimeState({
+      action,
+      direction,
+      anchor: 'auto',
+      orientation: 'auto',
+      fromEntry: currentEntry,
+      toEntry: nextEntry,
+      spec,
+    }),
+  };
+}
+
 export function NavigationStackProvider(
   props: NavigationStackProviderProps,
 ): ReactElement | null {
@@ -235,360 +553,184 @@ export function NavigationStackProvider(
     props.onDepthChange?.(state.entries.length);
   }, [props, state.activeIndex, state.entries]);
 
-  const commitState = (nextState: NavigationStackState): void => {
-    if (isControlled) {
-      props.onStateChange(nextState);
+  const propsRef = useRef<NavigationStackProviderProps>(props);
+  propsRef.current = props;
+
+  const commitState = useCallback((nextState: NavigationStackState): void => {
+    const p = propsRef.current;
+    if (p.state !== undefined) {
+      p.onStateChange(nextState);
     } else {
       setInternalState(nextState);
     }
-  };
+  }, []);
 
-  const dispatch = async (action: NavigationAction): Promise<void> => {
-    const currentState = stateRef.current.isTransitioning
-      ? finalizeTransition(stateRef.current)
-      : stateRef.current;
+  const dispatch = useCallback(
+    async (action: NavigationAction): Promise<void> => {
+      const p = propsRef.current;
+      const currentState = stateRef.current.isTransitioning
+        ? finalizeTransition(stateRef.current)
+        : stateRef.current;
 
-    if (props.onBeforeAction?.({ action, state: currentState }) === false) {
-      props.onBlockedAction?.({
-        action,
-        state: currentState,
-        reason: 'Action was blocked by onBeforeAction.',
-      });
-      return;
-    }
-
-    const currentEntry = currentState.entries[currentState.activeIndex] ?? null;
-
-    const currentRoute = currentEntry
-      ? resolveRouteDefinition(routes, currentEntry.routeName)
-      : null;
-
-    let nextState: NavigationStackState = currentState;
-    let nextEntry: NavigationEntry | null = currentEntry;
-    let nextRoute: NavigationRouteDefinition | null = currentRoute;
-
-    switch (action.type) {
-      case 'push': {
-        if (props.maxDepth && currentState.entries.length >= props.maxDepth) {
-          props.onBlockedAction?.({
-            action,
-            state: currentState,
-            reason: 'maxDepth exceeded',
-          });
-          return;
-        }
-        nextEntry = buildResolvedEntry(
-          props.id,
-          routes,
-          currentState.entries,
-          action.route,
-          action.params,
-          props.routeKeyResolver,
-        );
-        nextRoute = resolveRouteDefinition(routes, nextEntry.routeName);
-        nextState = {
-          ...currentState,
-          entries: [
-            ...currentState.entries.map((entry: NavigationEntry) => ({
-              ...entry,
-              state: 'inactive' as const,
-            })),
-            { ...nextEntry, state: 'entering' as const },
-          ],
-          activeIndex: currentState.entries.length,
-          lastAction: action,
-          isTransitioning: true,
-          transition: null,
-        };
-        break;
-      }
-      case 'replace': {
-        nextEntry = buildResolvedEntry(
-          props.id,
-          routes,
-          currentState.entries,
-          action.route,
-          action.params,
-          props.routeKeyResolver,
-        );
-        nextRoute = resolveRouteDefinition(routes, nextEntry.routeName);
-        if (currentState.entries.length === 0) {
-          nextState = {
-            ...currentState,
-            entries: [{ ...nextEntry, state: 'entering' }],
-            activeIndex: 0,
-            lastAction: action,
-            isTransitioning: true,
-            transition: null,
-          };
-        } else {
-          const entries = [...currentState.entries];
-          const activeIndex = currentState.activeIndex;
-          entries[activeIndex] = { ...nextEntry, state: 'entering' };
-          nextState = {
-            ...currentState,
-            entries: entries.map((entry: NavigationEntry, index: number) => ({
-              ...entry,
-              state: index === activeIndex ? 'entering' : 'inactive',
-            })),
-            activeIndex,
-            lastAction: action,
-            isTransitioning: true,
-            transition: null,
-          };
-        }
-        break;
-      }
-      case 'pop': {
-        if (currentState.entries.length <= 1 || currentState.activeIndex <= 0) {
-          return;
-        }
-        const count = Math.max(1, action.count ?? 1);
-        const nextIndex = Math.max(0, currentState.activeIndex - count);
-        nextEntry = currentState.entries[nextIndex] ?? null;
-
-        nextRoute = nextEntry
-          ? resolveRouteDefinition(routes, nextEntry.routeName)
-          : null;
-        nextState = {
-          ...currentState,
-          entries: currentState.entries.map(
-            (entry: NavigationEntry, index: number) => {
-              if (index === nextIndex)
-                return { ...entry, state: 'entering' as const };
-              if (index === currentState.activeIndex)
-                return { ...entry, state: 'exiting' as const };
-              return { ...entry, state: 'inactive' as const };
-            },
-          ),
-          activeIndex: nextIndex,
-          lastAction: action,
-          isTransitioning: true,
-          transition: null,
-        };
-        break;
-      }
-      case 'popToRoot': {
-        if (currentState.entries.length <= 1 || currentState.activeIndex <= 0) {
-          return;
-        }
-        nextEntry = currentState.entries[0] ?? null;
-
-        nextRoute = nextEntry
-          ? resolveRouteDefinition(routes, nextEntry.routeName)
-          : null;
-        nextState = {
-          ...currentState,
-          entries: currentState.entries.map(
-            (entry: NavigationEntry, index: number) => {
-              if (index === 0) return { ...entry, state: 'entering' as const };
-              if (index === currentState.activeIndex)
-                return { ...entry, state: 'exiting' as const };
-              return { ...entry, state: 'inactive' as const };
-            },
-          ),
-          activeIndex: 0,
-          lastAction: action,
-          isTransitioning: true,
-          transition: null,
-        };
-        break;
-      }
-      case 'popTo': {
-        const index = currentState.entries.findIndex(
-          (entry: NavigationEntry, entryIndex: number) =>
-            matchesNavigationEntry(
-              action.matcher,
-              entry,
-              entryIndex,
-              currentState.entries,
-            ),
-        );
-        if (index < 0 || index === currentState.activeIndex) {
-          return;
-        }
-        nextEntry = currentState.entries[index] ?? null;
-
-        nextRoute = nextEntry
-          ? resolveRouteDefinition(routes, nextEntry.routeName)
-          : null;
-        nextState = {
-          ...currentState,
-          entries: currentState.entries.map(
-            (entry: NavigationEntry, entryIndex: number) => {
-              if (entryIndex === index)
-                return { ...entry, state: 'entering' as const };
-              if (entryIndex === currentState.activeIndex)
-                return { ...entry, state: 'exiting' as const };
-              return { ...entry, state: 'inactive' as const };
-            },
-          ),
-          activeIndex: index,
-          lastAction: action,
-          isTransitioning: true,
-          transition: null,
-        };
-        break;
-      }
-      case 'reset': {
-        nextState = createInitialState({
-          routes,
-          initialEntries: action.entries,
-        });
-        nextEntry = nextState.entries[nextState.activeIndex] ?? null;
-
-        nextRoute = nextEntry
-          ? resolveRouteDefinition(routes, nextEntry.routeName)
-          : null;
-        nextState = {
-          ...nextState,
-          lastAction: action,
-
-          isTransitioning: Boolean(currentEntry && nextEntry),
-          transition: null,
-        };
-        if (nextState.isTransitioning) {
-          nextState = {
-            ...nextState,
-            entries: nextState.entries.map(
-              (entry: NavigationEntry, index: number) => ({
-                ...entry,
-                state:
-                  index === nextState.activeIndex ? 'entering' : 'inactive',
-              }),
-            ),
-          };
-        }
-        break;
-      }
-      case 'setParams': {
-        if (!currentEntry) {
-          return;
-        }
-        const entries = [...currentState.entries];
-        entries[currentState.activeIndex] = {
-          ...currentEntry,
-          params: mergeNavigationParams(currentEntry.params, action.params),
-        };
-        nextState = {
-          ...currentState,
-          entries,
-          lastAction: action,
-          isTransitioning: false,
-          transition: null,
-        };
-        break;
-      }
-      case 'updateEntry':
-      case 'preload':
-      default: {
-        nextState = navigationReducer(currentState, action);
-        nextEntry = nextState.entries[nextState.activeIndex] ?? null;
-
-        nextRoute = nextEntry
-          ? resolveRouteDefinition(routes, nextEntry.routeName)
-          : null;
-        break;
-      }
-    }
-
-    const guardsPass = await runNavigationGuards({
-      action,
-      currentState,
-      nextState,
-      currentRoute,
-      nextRoute,
-      stackId: props.id,
-    });
-
-    if (!guardsPass) {
-      props.onBlockedAction?.({
-        action,
-        state: currentState,
-        reason: 'Action was blocked by route guards.',
-      });
-      return;
-    }
-
-    if (nextState.isTransitioning) {
-      const reducedMotion = props.reducedMotion ?? 'system';
-      const rawSpec = resolveTransition({
-        action,
-        fromEntry: currentEntry,
-        toEntry: nextEntry,
-        depth: nextState.entries.length,
-        anchor: 'auto',
-        orientation: 'auto',
-        presentation: resolvePresentation(nextRoute),
-        reducedMotion,
-        stackTransition: props.transition,
-        routeTransition: nextRoute?.transition,
-        stackId: props.id,
-        lastAction: currentState.lastAction,
-      });
-      const spec = applyReducedMotionToTransition(rawSpec, reducedMotion);
-      const direction =
-        action.options?.direction ??
-        (action.type === 'pop' ||
-        action.type === 'popTo' ||
-        action.type === 'popToRoot'
-          ? 'backward'
-          : 'forward');
-      nextState = {
-        ...nextState,
-        transition: createTransitionRuntimeState({
+      if (p.onBeforeAction?.({ action, state: currentState }) === false) {
+        p.onBlockedAction?.({
           action,
-          direction,
-          anchor: 'auto',
-          orientation: 'auto',
-          fromEntry: currentEntry,
-          toEntry: nextEntry,
-          spec,
-        }),
-      };
-    }
-
-    commitState(nextState);
-    stateRef.current = nextState;
-    props.onAction?.({ action, nextState });
-
-    if (nextState.transition) {
-      const lifecycleContext: NavigationTransitionLifecycleContext = {
-        stackId: props.id,
-        transition: nextState.transition,
-        state: nextState,
-      };
-      props.onTransitionStart?.(lifecycleContext);
-
-      if (timeoutRef.current !== null && typeof window !== 'undefined') {
-        window.clearTimeout(timeoutRef.current);
-      }
-
-      const duration = nextState.transition.spec.duration ?? 0;
-      if (duration <= 0 || typeof window === 'undefined') {
-        const finalState = finalizeTransition(nextState);
-        commitState(finalState);
-        stateRef.current = finalState;
-        props.onTransitionEnd?.({
-          stackId: props.id,
-          transition: lifecycleContext.transition,
-          state: finalState,
+          state: currentState,
+          reason: 'Action was blocked by onBeforeAction.',
         });
         return;
       }
 
-      timeoutRef.current = window.setTimeout(() => {
-        const finalState = finalizeTransition(stateRef.current);
-        commitState(finalState);
-        stateRef.current = finalState;
-        props.onTransitionEnd?.({
-          stackId: props.id,
-          transition: lifecycleContext.transition,
-          state: finalState,
+      const currentEntry =
+        currentState.entries[currentState.activeIndex] ?? null;
+      const currentRoute = currentEntry
+        ? resolveRouteDefinition(routes, currentEntry.routeName)
+        : null;
+
+      let result: ActionResult | null | 'blocked';
+      switch (action.type) {
+        case 'push':
+          result = computePushAction(
+            currentState,
+            action,
+            routes,
+            p.id,
+            p.maxDepth,
+            p.routeKeyResolver,
+          );
+          break;
+        case 'replace':
+          result = computeReplaceAction(
+            currentState,
+            action,
+            routes,
+            p.id,
+            p.routeKeyResolver,
+          );
+          break;
+        case 'pop':
+          result = computePopAction(currentState, action, routes);
+          break;
+        case 'popToRoot':
+          result = computePopToRootAction(currentState, action, routes);
+          break;
+        case 'popTo':
+          result = computePopToAction(currentState, action, routes);
+          break;
+        case 'reset':
+          result = computeResetAction(
+            currentState,
+            action,
+            routes,
+            currentEntry,
+          );
+          break;
+        case 'setParams':
+          result = computeSetParamsAction(
+            currentState,
+            action,
+            currentEntry,
+            currentRoute,
+          );
+          break;
+        case 'updateEntry':
+        case 'preload':
+        default:
+          result = computeDefaultAction(currentState, action, routes);
+          break;
+      }
+
+      if (result === null) {
+        return;
+      }
+
+      if (result === 'blocked') {
+        p.onBlockedAction?.({
+          action,
+          state: currentState,
+          reason: 'maxDepth exceeded',
         });
-      }, duration);
-    }
-  };
+        return;
+      }
+
+      const { nextEntry, nextRoute } = result;
+      let { nextState } = result;
+
+      const guardsPass = await runNavigationGuards({
+        action,
+        currentState,
+        nextState,
+        currentRoute,
+        nextRoute,
+        stackId: p.id,
+      });
+
+      if (!guardsPass) {
+        p.onBlockedAction?.({
+          action,
+          state: currentState,
+          reason: 'Action was blocked by route guards.',
+        });
+        return;
+      }
+
+      if (nextState.isTransitioning) {
+        nextState = applyTransitionToState(
+          nextState,
+          action,
+          currentEntry,
+          nextEntry,
+          nextRoute,
+          currentState.lastAction,
+          p.id,
+          p.transition,
+          p.reducedMotion ?? 'system',
+        );
+      }
+
+      commitState(nextState);
+      stateRef.current = nextState;
+      p.onAction?.({ action, nextState });
+
+      if (nextState.transition) {
+        const lifecycleContext: NavigationTransitionLifecycleContext = {
+          stackId: p.id,
+          transition: nextState.transition,
+          state: nextState,
+        };
+        p.onTransitionStart?.(lifecycleContext);
+
+        if (timeoutRef.current !== null && typeof window !== 'undefined') {
+          window.clearTimeout(timeoutRef.current);
+        }
+
+        const duration = nextState.transition.spec.duration ?? 0;
+        if (duration <= 0 || typeof window === 'undefined') {
+          const finalState = finalizeTransition(nextState);
+          commitState(finalState);
+          stateRef.current = finalState;
+          p.onTransitionEnd?.({
+            stackId: p.id,
+            transition: lifecycleContext.transition,
+            state: finalState,
+          });
+          return;
+        }
+
+        timeoutRef.current = window.setTimeout(() => {
+          const finalState = finalizeTransition(stateRef.current);
+          commitState(finalState);
+          stateRef.current = finalState;
+          p.onTransitionEnd?.({
+            stackId: p.id,
+            transition: lifecycleContext.transition,
+            state: finalState,
+          });
+        }, duration);
+      }
+    },
+    [routes, commitState],
+  );
 
   const controller = useMemo<NavigationStackController>(
     () => ({
@@ -672,7 +814,7 @@ export function NavigationStackProvider(
         return findNavigationEntry(stateRef.current.entries, matcher);
       },
     }),
-    [props.id],
+    [props.id, dispatch],
   );
 
   const registry = useMemo(
