@@ -21,8 +21,8 @@ jobs:
     name: Validate PR title
     if: >-
       ${{ !github.event.pull_request.draft &&
-      !startsWith(github.base_ref, 'feature/') &&
-      !startsWith(github.base_ref, 'bugfix/') }}
+      !startsWith(github.base_ref, 'release/') &&
+      !startsWith(github.base_ref, 'hotfix/') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
