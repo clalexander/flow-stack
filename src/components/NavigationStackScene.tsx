@@ -7,13 +7,25 @@ import type {
   NavigationZIndexStrategy,
 } from '../core/public';
 
+/**
+ * Props for an individual scene container rendered inside `NavigationStackViewport`.
+ * These are set by the viewport and are not typically supplied by consumers directly
+ * unless implementing a custom `renderScene` function.
+ */
 export interface NavigationStackSceneProps {
+  /** The stack entry this scene is rendering. */
   entry: NavigationEntry;
+  /** Zero-based stack position of this entry. */
   index: number;
+  /** Whether this scene is the currently active entry. */
   isActive: boolean;
+  /** Whether this scene is the first (root) entry in the stack. */
   isRoot: boolean;
+  /** Current lifecycle phase of this scene's animation. */
   phase: NavigationScenePhase;
+  /** Runtime transition state while a transition is in-progress, or `null` when idle. */
   transitionState: NavigationTransitionRuntimeState | null;
+  /** How `z-index` values are assigned to this scene. */
   zIndexStrategy?: NavigationZIndexStrategy;
   /** Keyframe name produced by `buildAnimationKeyframes` and injected by the viewport. */
   animationName?: string;

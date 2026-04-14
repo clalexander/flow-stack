@@ -52,10 +52,18 @@ import { resolveTransition } from '../transitions/resolveTransition';
 
 import { NavigationStackScreen } from './NavigationStackScreen';
 
+/** Shared props for both controlled and uncontrolled `NavigationStackProvider` variants. */
 export interface NavigationStackProviderBaseProps {
+  /** Unique identifier for this stack instance. Required. */
   id: NavigationStackId;
+  /**
+   * Route definitions — array or record — that this stack can navigate to.
+   * Routes may also be declared inline as `<NavigationStackScreen>` children.
+   */
   routes?: NavigationRouteRegistry;
+  /** Maximum number of entries allowed in the stack. Push actions beyond this limit are ignored. */
   maxDepth?: number;
+  /** Default transition for all routes. Can be overridden per-route or per-action. */
   transition?:
     | NavigationTransitionPresetName
     | NavigationTransitionSpec
@@ -68,37 +76,73 @@ export interface NavigationStackProviderBaseProps {
    * (via `useNavigationTransitions().isReducedMotion`). Both props are independent —
    * this one controls the spec, the viewport one controls the consumer-side signal.
    * Pass the same value to both to keep them in sync.
+   * @default 'system'
    */
   reducedMotion?: NavigationReducedMotionPreference;
+  /** Custom function for generating entry keys. Defaults to the built-in monotonic key strategy. */
   routeKeyResolver?: NavigationRouteKeyResolver;
 
+  /**
+   * Called before any action is applied to the stack.
+   * Return `false` to block the action entirely.
+   */
   onBeforeAction?: (context: NavigationBeforeActionContext) => boolean;
+  /** Called after an action has been successfully applied to the stack. */
   onAction?: (context: NavigationActionContext) => void;
+  /** Called whenever the active stack entry changes. */
   onActiveEntryChange?: (context: NavigationActiveEntryChangeContext) => void;
+  /** Called whenever the number of entries in the stack changes. */
   onDepthChange?: (depth: number) => void;
+  /** Called when a transition animation begins. */
   onTransitionStart?: (context: NavigationTransitionLifecycleContext) => void;
+  /** Called when a transition animation ends. */
   onTransitionEnd?: (context: NavigationTransitionLifecycleContext) => void;
+  /** Called when an action is blocked by a guard or `onBeforeAction`. */
   onBlockedAction?: (context: NavigationBlockedActionContext) => void;
 
+  /** `<NavigationStackScreen>` elements and/or `<NavigationStackViewport>`. */
   children?: ReactNode;
 }
 
+/**
+ * Props for an uncontrolled `NavigationStackProvider`.
+ * The stack manages its own state internally, starting from `initialRoute` or `initialEntries`.
+ */
 export interface NavigationStackProviderUncontrolledProps extends NavigationStackProviderBaseProps {
+  /**
+   * The route to navigate to when the stack is first created.
+   * Mutually exclusive with `initialEntries`.
+   */
   initialRoute?: NavigationRouteRef;
+  /** Parameters passed to `initialRoute`. Ignored when `initialEntries` is provided. */
   initialParams?: NavigationParams;
+  /**
+   * An ordered list of entries to pre-populate the stack with on creation.
+   * Mutually exclusive with `initialRoute`.
+   */
   initialEntries?: readonly NavigationEntryInput[];
   state?: never;
   onStateChange?: never;
 }
 
+/**
+ * Props for a controlled `NavigationStackProvider`.
+ * The consumer owns the state and must update it via `onStateChange` on every action.
+ */
 export interface NavigationStackProviderControlledProps extends NavigationStackProviderBaseProps {
+  /** The current externally-managed stack state. */
   state: NavigationStackState;
+  /** Called whenever the stack state changes. The consumer must store and feed back this value. */
   onStateChange: (state: NavigationStackState) => void;
   initialRoute?: never;
   initialParams?: never;
   initialEntries?: never;
 }
 
+/**
+ * Props accepted by `NavigationStackProvider`.
+ * Use the uncontrolled form for self-managed state, or the controlled form to own the state externally.
+ */
 export type NavigationStackProviderProps =
   | NavigationStackProviderUncontrolledProps
   | NavigationStackProviderControlledProps;
@@ -503,6 +547,15 @@ function applyTransitionToState(
   };
 }
 
+/**
+ * The root context provider for a navigation stack.
+ *
+ * Wrap your sidebar, modal, panel, or any arbitrary container with this component
+ * to enable push/pop stack-based navigation inside it. Pair with
+ * `NavigationStackViewport` to render the scenes, `NavigationStackScreen` to
+ * declare routes, and `useNavigationStack` to drive navigation from anywhere in
+ * the subtree.
+ */
 export function NavigationStackProvider(
   props: NavigationStackProviderProps,
 ): ReactElement | null {

@@ -7,8 +7,21 @@ import type {
   NavigationStackId,
 } from '../core/public';
 
+/**
+ * The return type of `useNavigationStack`.
+ * Extends `NavigationStackController` with the full navigation API.
+ */
 export interface UseNavigationStackResult extends NavigationStackController {}
 
+/**
+ * Returns the `NavigationStackController` for the nearest `NavigationStackProvider`
+ * ancestor, or for a specific stack when `stackId` is supplied.
+ *
+ * Throws if no matching stack is found in the tree.
+ *
+ * @param stackId - Optional ID of a specific stack to target. When omitted, uses the nearest provider.
+ * @returns The controller for the resolved stack.
+ */
 export function useNavigationStack(
   stackId?: NavigationStackId,
 ): UseNavigationStackResult {

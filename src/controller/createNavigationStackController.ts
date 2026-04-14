@@ -22,13 +22,30 @@ import { createInitialState } from './createInitialState';
 import { navigationReducer } from './navigationReducer';
 import type { NavigationStackController } from './NavigationStackController';
 
+/** Options for creating a headless navigation stack controller. */
 export interface CreateNavigationStackControllerOptions {
+  /** Unique identifier for this stack instance. */
   id: NavigationStackId;
+  /** Route definitions — array or record — that this stack can navigate to. */
   routes: NavigationRouteRegistry;
+  /**
+   * An ordered list of entries to pre-populate the stack with on creation.
+   * Mutually exclusive with `initialRoute`.
+   */
   initialEntries?: readonly NavigationEntryInput[];
+  /**
+   * A single route to navigate to when the stack is first created.
+   * Mutually exclusive with `initialEntries`.
+   */
   initialRoute?: NavigationRouteRef;
+  /**
+   * Parameters passed to `initialRoute`.
+   * Ignored when `initialEntries` is provided.
+   */
   initialParams?: NavigationParams;
+  /** Maximum number of entries allowed in the stack. Push actions beyond this limit are ignored. */
   maxDepth?: number;
+  /** Custom function for generating entry keys. Defaults to the built-in monotonic key strategy. */
   routeKeyResolver?: NavigationRouteKeyResolver;
 }
 
@@ -69,6 +86,17 @@ function buildResolvedEntry(
   };
 }
 
+/**
+ * Creates a headless, framework-independent navigation stack controller.
+ *
+ * The returned controller manages its own mutable state and can be used outside
+ * of React (e.g. in unit tests or server-side logic). To use it inside a React
+ * tree, prefer `NavigationStackProvider` which wraps this controller with hooks
+ * and lifecycle management.
+ *
+ * @param options - Configuration for the stack, including route definitions and initial state.
+ * @returns A `NavigationStackController` instance.
+ */
 export function createNavigationStackController(
   options: CreateNavigationStackControllerOptions,
 ): NavigationStackController {

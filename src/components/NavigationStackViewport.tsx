@@ -41,33 +41,102 @@ import { resolveAnchorAnimation } from '../transitions/resolveAnchorAnimation';
 
 import { NavigationStackScene } from './NavigationStackScene';
 
+/**
+ * Contextual data passed to a custom `renderScene` function in `NavigationStackViewport`.
+ */
 export interface NavigationStackSceneRenderContext {
+  /** The stack entry this scene should render. */
   entry: NavigationEntry;
+  /** Zero-based stack position of this entry. */
   index: number;
+  /** Whether this scene is the currently active entry. */
   isActive: boolean;
+  /** Whether this scene is the first (root) entry in the stack. */
   isRoot: boolean;
+  /** Current lifecycle phase of this scene's animation. */
   phase: NavigationScenePhase;
+  /** Runtime transition state while a transition is in-progress, or `null` when idle. */
   transitionState: NavigationTransitionRuntimeState | null;
 }
 
+/** Props for the `NavigationStackViewport` component. */
 export interface NavigationStackViewportProps {
+  /**
+   * ID of the stack to render. Only required when multiple stacks are mounted
+   * and this viewport should target a specific one.
+   */
   stackId?: NavigationStackId;
+  /**
+   * The edge of the viewport from which scenes enter and exit.
+   * @default 'left'
+   */
   anchor?: NavigationAnchor;
+  /**
+   * The scroll axis of the slide animation. Inferred from `anchor` when omitted.
+   */
   orientation?: NavigationOrientation;
+  /**
+   * How the animation direction and orientation are derived from the `anchor`.
+   * @default 'follow-anchor'
+   */
   anchorAnimationPolicy?: NavigationAnchorAnimationPolicy;
+  /**
+   * Custom scene renderer. When provided, replaces the default `NavigationStackScene`.
+   * Receives `NavigationStackSceneRenderContext` and must return a `ReactNode`.
+   */
   renderScene?: (scene: NavigationStackSceneRenderContext) => ReactNode;
+  /**
+   * Renderer called when the stack has no entries.
+   * Returns a `ReactNode` to display in the empty viewport.
+   */
   renderEmpty?: () => ReactNode;
+  /**
+   * Controls which entries are kept mounted in the DOM.
+   * @default 'active-only'
+   */
   mountStrategy?: NavigationMountStrategy;
+  /**
+   * Controls whether scenes are clipped at the viewport boundary during transitions.
+   * @default 'clip'
+   */
   overflowBehavior?: NavigationOverflowBehavior;
+  /**
+   * Controls how `z-index` is assigned to scene containers.
+   * @default 'auto'
+   */
   zIndexStrategy?: NavigationZIndexStrategy;
+  /**
+   * Controls whether transitions are simplified or skipped for users who prefer
+   * reduced motion. Also drives the `isReducedMotion` value in `useNavigationTransitions`.
+   * @default 'system'
+   */
   reducedMotion?: NavigationReducedMotionPreference;
+  /**
+   * When `true`, focuses the first focusable element in the incoming scene after
+   * each navigation action. Set to `false` to manage focus manually.
+   * @default true
+   */
   autoFocus?: boolean;
+  /**
+   * When `true`, returns focus to the viewport container when going back (pop actions).
+   * Only takes effect when `autoFocus` is `true`.
+   */
   restoreFocusOnBack?: boolean;
+  /** ARIA label for the viewport container element. */
   ariaLabel?: string;
+  /**
+   * ARIA live region mode. Set to `'polite'` to have screen readers announce
+   * the incoming scene name on each navigation.
+   * @default 'off'
+   */
   ariaLiveMode?: NavigationAriaLiveMode;
+  /** Additional CSS class name applied to the viewport container. */
   className?: string;
+  /** Inline styles applied to the viewport container. */
   style?: CSSProperties;
+  /** Called when a transition animation begins. */
   onTransitionStart?: (context: NavigationTransitionLifecycleContext) => void;
+  /** Called when a transition animation ends. */
   onTransitionEnd?: (context: NavigationTransitionLifecycleContext) => void;
 }
 
@@ -88,6 +157,12 @@ function resolvePhase(
   return index === activeIndex ? 'active' : 'inactive';
 }
 
+/**
+ * Renders all currently mounted stack scenes inside a `position: relative` container
+ * and manages transition animations, focus, and ARIA attributes.
+ *
+ * Must be rendered inside (or alongside) a `NavigationStackProvider`.
+ */
 export function NavigationStackViewport(
   props: NavigationStackViewportProps,
 ): ReactElement | null {
@@ -204,7 +279,11 @@ export function NavigationStackViewport(
     const wasTransitioning = prevIsTransitioningRef.current;
     prevIsTransitioningRef.current = stateRef.current.isTransitioning;
 
-    if (stateRef.current.isTransitioning && !wasTransitioning && stateRef.current.transition) {
+    if (
+      stateRef.current.isTransitioning &&
+      !wasTransitioning &&
+      stateRef.current.transition
+    ) {
       activeTransitionRef.current = stateRef.current.transition;
       propsRef.current.onTransitionStart?.({
         stackId,
