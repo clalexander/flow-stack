@@ -1,0 +1,21 @@
+# Default owners
+
+- @clalexander
+
+# GitHub workflows and repository automation
+
+.github/ @clalexander
+
+# Documentation
+
+README.md @clalexander
+docs/ @clalexander
+
+# Package source and tests
+
+src/ @clalexander
+test/ @clalexander
+
+# Examples
+
+examples/ @clalexander
