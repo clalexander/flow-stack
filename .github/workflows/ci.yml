@@ -13,12 +13,6 @@ on:
       - dev
       - "release/**"
       - "hotfix/**"
-  push:
-    branches:
-      - main
-      - dev
-      - "release/**"
-      - "hotfix/**"
 
 permissions:
   contents: read
