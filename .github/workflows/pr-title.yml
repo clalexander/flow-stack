@@ -1,0 +1,51 @@
+name: PR Title
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - edited
+      - synchronize
+      - ready_for_review
+
+permissions:
+  pull-requests: read
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate PR title
+    if: >-
+      ${{ !github.event.pull_request.draft &&
+      !startsWith(github.base_ref, 'feature/') &&
+      !startsWith(github.base_ref, 'bugfix/') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Validate pull request title
+        uses: amannn/action-semantic-pull-request@v6.1.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            build
+            chore
+            ci
+            docs
+            feat
+            fix
+            perf
+            refactor
+            test
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: >
+            The subject "{subject}" found in the pull request title "{title}"
+            must start with a lowercase letter.
+          validateSingleCommit: false
