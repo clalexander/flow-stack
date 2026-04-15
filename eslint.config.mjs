@@ -153,7 +153,10 @@ export default defineConfig(
       'react-hooks/exhaustive-deps': 'off',
     },
   },
-
+  {
+    files: ['**/*.{js,mjs,cjs}'],
+    extends: [tseslint.configs.disableTypeChecked],
+  },
   // Must be last: disables formatting-related ESLint rules
   eslintConfigPrettier,
 );
