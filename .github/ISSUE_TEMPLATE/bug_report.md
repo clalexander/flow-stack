@@ -1,8 +1,8 @@
 ---
 name: Bug report
 about: Report a reproducible problem in Flow Stack
-title: "fix: "
-labels: ["bug", "needs-triage"]
+title: 'fix: '
+labels: ['bug', 'needs-triage']
 assignees: []
 ---
 

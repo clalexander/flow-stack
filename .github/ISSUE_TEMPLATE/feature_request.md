@@ -1,8 +1,8 @@
 ---
 name: Feature request
 about: Suggest an enhancement for Flow Stack
-title: "feat: "
-labels: ["enhancement", "needs-triage"]
+title: 'feat: '
+labels: ['enhancement', 'needs-triage']
 assignees: []
 ---
 
