@@ -13,6 +13,9 @@ on:
       - dev
       - 'release/**'
       - 'hotfix/**'
+  push:
+    branches:
+      - main
 
 permissions:
   contents: read
