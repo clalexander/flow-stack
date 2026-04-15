@@ -2,7 +2,11 @@
 
 Stack-based navigation for React — designed to live inside a container, not own the page.
 
----
+[![CI](https://github.com/clalexander/flow-stack/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/clalexander/flow-stack/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/flow-stack)](https://www.npmjs.com/package/flow-stack)
+[![npm downloads](https://img.shields.io/npm/dm/flow-stack)](https://www.npmjs.com/package/flow-stack)
+[![License](https://img.shields.io/github/license/clalexander/flow-stack)](https://github.com/clalexander/flow-stack/blob/main/LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/clalexander/flow-stack)](https://github.com/clalexander/flow-stack/releases)
 
 ## What it is
 
