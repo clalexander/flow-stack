@@ -5,7 +5,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 import { NavigationStackProvider } from '../../../src/components/NavigationStackProvider';
 import { NavigationStackViewport } from '../../../src/components/NavigationStackViewport';
-import type { NavigationActionContext, NavigationActiveEntryChangeContext, NavigationStackState } from '../../../src/core/public';
+import type {
+  NavigationActionContext,
+  NavigationActiveEntryChangeContext,
+  NavigationStackState,
+} from '../../../src/core/public';
 import { useNavigationStack } from '../../../src/hooks/useNavigationStack';
 import { simpleRegistry } from '../../fixtures/routes';
 
@@ -301,7 +305,9 @@ describe('NavigationStackProvider lifecycle callbacks', () => {
     });
 
     expect(onAction).toHaveBeenCalledOnce();
-    expect((onAction.mock.calls[0]?.[0] as NavigationActionContext).action.type).toBe('push');
+    expect(
+      (onAction.mock.calls[0]?.[0] as NavigationActionContext).action.type,
+    ).toBe('push');
   });
 
   it('blocks an action when onBeforeAction returns false', async () => {
