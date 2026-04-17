@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactElement, type ReactNode } from 'react';
+import { type CSSProperties, type ReactNode } from 'react';
 
 import type {
   NavigationEntry,
@@ -40,7 +40,7 @@ export interface NavigationStackSceneProps {
 
 export function NavigationStackScene(
   props: NavigationStackSceneProps,
-): ReactElement | null {
+): ReactNode {
   const duration = props.transitionState?.spec.duration ?? 250;
   const easing = props.animationEasing ?? 'ease';
   const delay = props.animationDelay ?? 0;

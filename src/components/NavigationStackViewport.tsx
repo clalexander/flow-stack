@@ -1,7 +1,6 @@
 import {
   createElement,
   type CSSProperties,
-  type ReactElement,
   type ReactNode,
   useContext,
   useEffect,
@@ -165,7 +164,7 @@ function resolvePhase(
  */
 export function NavigationStackViewport(
   props: NavigationStackViewportProps,
-): ReactElement | null {
+): ReactNode {
   const stackContext = useContext(NavigationStackContext);
   const registry = useContext(NavigationStackRegistryContext);
 
