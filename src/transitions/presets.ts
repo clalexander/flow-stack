@@ -55,7 +55,7 @@ export const navigationTransitionPresets: Readonly<
     preset: 'fade-scale',
     duration: 180,
     opacity: { from: 0, to: 1 },
-    scale: { from: 0.98, to: 1 },
+    scale: { from: 0.95, to: 1 },
     translate: undefined,
     reverseOnBack: undefined,
     clip: undefined,
