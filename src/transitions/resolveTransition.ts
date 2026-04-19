@@ -104,7 +104,10 @@ function materializeTransition(
     // String presets contribute their animation *style* only.
     // Their timing fields are implicit defaults — they must not clobber explicit
     // timing that was set at a lower-priority level.
-    result = navigationTransitionPresets[result];
+    return {
+      spec: navigationTransitionPresets[result],
+      explicitTimingKeys: new Set(),
+    };
   }
 
   if (!result) {
