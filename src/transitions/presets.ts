@@ -60,15 +60,6 @@ export const navigationTransitionPresets: Readonly<
     reverseOnBack: undefined,
     clip: undefined,
   },
-  crossfade: {
-    preset: 'crossfade',
-    duration: 180,
-    opacity: { from: 0, to: 1 },
-    translate: undefined,
-    scale: undefined,
-    reverseOnBack: undefined,
-    clip: undefined,
-  },
   none: {
     preset: 'none',
     duration: 0,
