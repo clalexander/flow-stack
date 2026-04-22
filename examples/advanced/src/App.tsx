@@ -1,5 +1,5 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   NavigationRouteRegistry,
   NavigationStackProvider,
@@ -21,7 +21,7 @@ function toTitleCase(s: string): string {
     .join(' ');
 }
 
-function HomeScreen(_props: NavigationScreenRenderProps) {
+function HomeScreen() {
   const navigation = useNavigationStack();
 
   return (
@@ -121,7 +121,7 @@ function ArticleScreen({
   );
 }
 
-function PreferencesScreen(_props: NavigationScreenRenderProps) {
+function PreferencesScreen() {
   return (
     <div style={screenStyle}>
       <span style={eyebrowStyle}>Preferences</span>
@@ -669,38 +669,4 @@ const sliderValueStyle: React.CSSProperties = {
   color: '#111827',
   minWidth: 42,
   textAlign: 'right',
-};
-
-const toggleTrackStyle: React.CSSProperties = {
-  position: 'relative',
-  display: 'inline-flex',
-  width: 40,
-  height: 22,
-  borderRadius: 11,
-  background: '#d4d4d4',
-  border: 'none',
-  cursor: 'pointer',
-  padding: 0,
-  flexShrink: 0,
-  transition: 'background 150ms',
-};
-
-const toggleTrackActiveStyle: React.CSSProperties = {
-  background: '#111827',
-};
-
-const toggleThumbStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: 3,
-  left: 3,
-  width: 16,
-  height: 16,
-  borderRadius: '50%',
-  background: '#ffffff',
-  transition: 'left 150ms',
-  pointerEvents: 'none',
-};
-
-const toggleThumbActiveStyle: React.CSSProperties = {
-  left: 21,
 };

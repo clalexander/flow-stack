@@ -6,7 +6,7 @@ import {
   type NavigationScreenRenderProps,
 } from 'flow-stack';
 
-function HomeScreen(_props: NavigationScreenRenderProps) {
+function HomeScreen() {
   const navigation = useNavigationStack();
 
   return (
