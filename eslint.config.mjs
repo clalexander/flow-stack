@@ -131,6 +131,17 @@ export default defineConfig(
     },
   },
 
+  // Example apps - disable type-checked rules; examples have their own node_modules
+  {
+    files: ['examples/**/*.ts', 'examples/**/*.tsx'],
+    extends: [tseslint.configs.disableTypeChecked],
+    rules: {
+      'no-console': 'off',
+      'import/no-extraneous-dependencies': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+
   // Test files
   {
     files: ['test/**'],

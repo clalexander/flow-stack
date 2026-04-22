@@ -1,7 +1,6 @@
 import {
   createElement,
   type CSSProperties,
-  type ReactElement,
   type ReactNode,
   useContext,
   useEffect,
@@ -165,7 +164,7 @@ function resolvePhase(
  */
 export function NavigationStackViewport(
   props: NavigationStackViewportProps,
-): ReactElement | null {
+): ReactNode {
   const stackContext = useContext(NavigationStackContext);
   const registry = useContext(NavigationStackRegistryContext);
 
@@ -261,7 +260,12 @@ export function NavigationStackViewport(
     if (mountStrategy === 'active-plus-previous' && state.activeIndex > 0) {
       const previous = state.entries[state.activeIndex - 1];
       if (previous) {
-        keys.add(previous.key);
+        const isParticipant =
+          previous.key === state.transition?.fromEntry?.key ||
+          previous.key === state.transition?.toEntry?.key;
+        if (!state.isTransitioning || isParticipant) {
+          keys.add(previous.key);
+        }
       }
     }
 

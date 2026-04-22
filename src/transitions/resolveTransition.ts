@@ -82,12 +82,10 @@ function materializeTransition(
     | undefined,
   options: ResolveTransitionOptions,
 ): MaterializedTransition | undefined {
-  if (!value) {
-    return undefined;
-  }
+  let result = value;
 
-  if (typeof value === 'function') {
-    const result = value({
+  if (typeof result === 'function') {
+    result = result({
       stackId: options.stackId ?? 'default',
       actionType: options.action.type,
       direction: options.action.options?.direction ?? 'auto',
@@ -100,32 +98,27 @@ function materializeTransition(
       reducedMotion: options.reducedMotion,
       lastAction: options.lastAction ?? null,
     });
-    if (!result) {
-      return undefined;
-    }
-    return {
-      spec: expandPresetObject(result),
-      explicitTimingKeys: new Set(
-        TIMING_KEYS.filter((k) => k in result && result[k] !== undefined),
-      ),
-    };
   }
 
-  if (typeof value === 'string') {
+  if (typeof result === 'string') {
     // String presets contribute their animation *style* only.
     // Their timing fields are implicit defaults — they must not clobber explicit
     // timing that was set at a lower-priority level.
     return {
-      spec: navigationTransitionPresets[value],
-      explicitTimingKeys: new Set<TimingKey>(),
+      spec: navigationTransitionPresets[result],
+      explicitTimingKeys: new Set(),
     };
+  }
+
+  if (!result) {
+    return undefined;
   }
 
   // Plain object: all timing fields present on the object are explicit.
   return {
-    spec: expandPresetObject(value),
+    spec: expandPresetObject(result),
     explicitTimingKeys: new Set(
-      TIMING_KEYS.filter((k) => k in value && value[k] !== undefined),
+      TIMING_KEYS.filter((k) => k in result && result[k] !== undefined),
     ),
   };
 }

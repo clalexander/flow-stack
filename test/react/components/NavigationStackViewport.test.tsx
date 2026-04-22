@@ -72,6 +72,38 @@ function ActionButtons(): ReactNode {
   );
 }
 
+function ThreeScreenStack(): ReactNode {
+  return (
+    <NavigationStackProvider
+      id="test"
+      routes={simpleRegistry}
+      initialRoute={{ name: 'Home' }}
+    >
+      <NavigationStackViewport
+        mountStrategy="active-plus-previous"
+        renderScene={({ entry, isActive }) => (
+          <div
+            data-testid={`scene-${entry.routeName}`}
+            data-active={String(isActive)}
+          />
+        )}
+      />
+      <ThreeScreenActions />
+    </NavigationStackProvider>
+  );
+}
+
+function ThreeScreenActions(): ReactNode {
+  const c = useNavigationStack();
+  return (
+    <>
+      <button data-testid="push-detail" onClick={() => c.push('Detail')} />
+      <button data-testid="push-settings" onClick={() => c.push('Settings')} />
+      <button data-testid="pop" onClick={() => c.pop()} />
+    </>
+  );
+}
+
 describe('NavigationStackViewport', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -124,6 +156,42 @@ describe('NavigationStackViewport', () => {
       // after transition finalized Detail is active, Home should be unmounted
       expect(() => screen.getByTestId('scene-Home')).toThrow();
       expect(screen.getByTestId('scene-Detail')).toBeTruthy();
+    });
+
+    it('active-plus-previous does not mount ghost scene during back transition', async () => {
+      render(<ThreeScreenStack />);
+
+      // Build up a 3-entry stack: Home → Detail → Settings
+      await act(async () => {
+        screen.getByTestId('push-detail').click();
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(2000);
+      });
+      await act(async () => {
+        screen.getByTestId('push-settings').click();
+      });
+      await act(async () => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      // Pop back to Detail — transition starts but timers haven't fired yet
+      await act(async () => {
+        screen.getByTestId('pop').click();
+      });
+
+      // Mid-transition: Home must not be mounted (it is not a transition participant)
+      expect(() => screen.getByTestId('scene-Home')).toThrow();
+
+      // Complete the transition
+      await act(async () => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      // Post-transition: Detail active, Home mounted as previous, Settings unmounted
+      expect(screen.getByTestId('scene-Detail').dataset.active).toBe('true');
+      expect(screen.getByTestId('scene-Home')).toBeTruthy();
+      expect(() => screen.getByTestId('scene-Settings')).toThrow();
     });
   });
 

@@ -64,10 +64,10 @@ describe('resolveTransition', () => {
         action: {
           type: 'push',
           route: 'Detail',
-          options: { transition: 'crossfade' },
+          options: { transition: 'fade' },
         },
       });
-      expect(spec.preset).toBe('crossfade');
+      expect(spec.preset).toBe('fade');
     });
   });
 
@@ -119,9 +119,9 @@ describe('resolveTransition', () => {
     it('uses resolver return value as the spec', () => {
       const spec = resolveTransition({
         ...baseOptions,
-        stackTransition: () => navigationTransitionPresets['crossfade'],
+        stackTransition: () => navigationTransitionPresets['fade'],
       });
-      expect(spec.preset).toBe('crossfade');
+      expect(spec.preset).toBe('fade');
     });
 
     it('falls back to default when resolver returns null/undefined', () => {

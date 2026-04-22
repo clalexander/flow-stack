@@ -1,6 +1,5 @@
 import {
   Children,
-  type ReactElement,
   type ReactNode,
   isValidElement,
   useCallback,
@@ -558,7 +557,7 @@ function applyTransitionToState(
  */
 export function NavigationStackProvider(
   props: NavigationStackProviderProps,
-): ReactElement | null {
+): ReactNode {
   const routes = useMemo(() => {
     const registry =
       props.routes !== undefined

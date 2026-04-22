@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import type { ReactNode } from 'react';
 
 import type {
   NavigationCachePolicy,
@@ -68,7 +68,7 @@ export function NavigationStackScreen<
 >(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _props: NavigationStackScreenProps<TRouteName, TParams>,
-): ReactElement | null {
+): ReactNode {
   return null;
 }
 

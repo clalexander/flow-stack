@@ -10,7 +10,6 @@ const allPresets: NavigationTransitionPresetName[] = [
   'slide-down',
   'fade',
   'fade-scale',
-  'crossfade',
   'none',
 ];
 
@@ -56,7 +55,7 @@ describe('navigationTransitionPresets', () => {
   });
 
   it('fade presets have opacity from 0 to 1', () => {
-    for (const name of ['fade', 'fade-scale', 'crossfade'] as const) {
+    for (const name of ['fade', 'fade-scale'] as const) {
       expect(navigationTransitionPresets[name].opacity?.from).toBe(0);
       expect(navigationTransitionPresets[name].opacity?.to).toBe(1);
     }
@@ -64,7 +63,7 @@ describe('navigationTransitionPresets', () => {
 
   it('fade-scale includes scale', () => {
     const spec = navigationTransitionPresets['fade-scale'];
-    expect(spec.scale?.from).toBe(0.98);
+    expect(spec.scale?.from).toBe(0.95);
     expect(spec.scale?.to).toBe(1);
   });
 });

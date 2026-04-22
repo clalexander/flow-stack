@@ -112,7 +112,7 @@ export interface NavigationTransitionResolverContext {
  */
 export type NavigationTransitionResolver = (
   context: NavigationTransitionResolverContext,
-) => NavigationTransitionSpec | undefined;
+) => NavigationTransitionSpec | NavigationTransitionPresetName | undefined;
 
 /** Live runtime state of an in-progress navigation transition. */
 export interface NavigationTransitionRuntimeState {

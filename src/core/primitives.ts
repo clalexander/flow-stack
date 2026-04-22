@@ -171,7 +171,6 @@ export type NavigationTransitionPresetName =
   | 'slide-down'
   | 'fade'
   | 'fade-scale'
-  | 'crossfade'
   | 'none';
 
 /** The CSS transform axis used for a translate transition. */
