@@ -1,6 +1,5 @@
 import type {
   NavigationEntry,
-  NavigationEntryState,
   NavigationStackState,
 } from '../../src/core/public';
 
@@ -15,7 +14,7 @@ export function makeEntry(
     routeName: overrides.routeName ?? 'Home',
     params: {},
     createdAt: Date.now(),
-    state: 'active' as NavigationEntryState,
+    state: 'active',
     ...overrides,
   };
 }
@@ -27,9 +26,7 @@ export function activeStackState(
   return {
     entries: entries.map((e, i) => ({
       ...e,
-      state: (i === activeIndex
-        ? 'active'
-        : 'inactive') as NavigationEntryState,
+      state: i === activeIndex ? 'active' : 'inactive',
     })),
     activeIndex,
     isTransitioning: false,

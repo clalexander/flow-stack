@@ -30,5 +30,5 @@ export function normalizeRouteRegistry(
 
   return Object.fromEntries(
     Object.entries(routes).map(([name, route]) => [name, route]),
-  ) as NormalizedNavigationRouteRegistry;
+  );
 }

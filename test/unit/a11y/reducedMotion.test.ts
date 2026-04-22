@@ -10,13 +10,9 @@ import { navigationTransitionPresets } from '../../../src/transitions/presets';
 beforeEach(() => {
   let _matches = false;
   vi.stubGlobal('window', {
-    matchMedia: vi.fn().mockImplementation(
-      (query: string) =>
-        ({
-          matches:
-            query === '(prefers-reduced-motion: reduce)' ? _matches : false,
-        }) as unknown as MediaQueryList,
-    ),
+    matchMedia: vi.fn().mockImplementation((query: string) => ({
+      matches: query === '(prefers-reduced-motion: reduce)' ? _matches : false,
+    })),
   });
   // expose setter for tests
   (globalThis as unknown as Record<string, unknown>).__setMatchMedia = (
