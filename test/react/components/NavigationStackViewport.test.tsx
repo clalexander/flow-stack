@@ -97,19 +97,12 @@ function ThreeScreenActions(): ReactNode {
   const c = useNavigationStack();
   return (
     <>
-      <button
-        data-testid="push-detail"
-        onClick={() => c.push('Detail')}
-      />
-      <button
-        data-testid="push-settings"
-        onClick={() => c.push('Settings')}
-      />
+      <button data-testid="push-detail" onClick={() => c.push('Detail')} />
+      <button data-testid="push-settings" onClick={() => c.push('Settings')} />
       <button data-testid="pop" onClick={() => c.pop()} />
     </>
   );
 }
-
 
 describe('NavigationStackViewport', () => {
   beforeEach(() => {
