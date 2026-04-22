@@ -21,9 +21,7 @@ describe('normalizeRouteRegistry', () => {
         { name: 'Home', component: () => null },
         { name: 'Home', component: () => null },
       ] as const;
-      const result = normalizeRouteRegistry(
-        dup as unknown as typeof simpleRegistry,
-      );
+      const result = normalizeRouteRegistry(dup);
       expect(result['Home']).toBe(dup[1]);
     });
 

@@ -183,8 +183,8 @@ export function NavigationStackViewport(
 
   const routes: NormalizedNavigationRouteRegistry =
     props.stackId && stackContext?.controller.stackId !== props.stackId
-      ? ({} as NormalizedNavigationRouteRegistry)
-      : (stackContext?.routes ?? ({} as NormalizedNavigationRouteRegistry));
+      ? {}
+      : (stackContext?.routes ?? {});
 
   if (!controller) {
     throw new Error(
