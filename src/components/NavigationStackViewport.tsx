@@ -334,6 +334,8 @@ export function NavigationStackViewport(
           delay: number;
           easing: string;
           clip: boolean;
+          fromTransform: string | undefined;
+          fromOpacity: number | undefined;
         }
       >(),
     };
@@ -348,7 +350,14 @@ export function NavigationStackViewport(
     const cssBlocks: string[] = [];
     const animations = new Map<
       string,
-      { name: string | undefined; delay: number; easing: string; clip: boolean }
+      {
+        name: string | undefined;
+        delay: number;
+        easing: string;
+        clip: boolean;
+        fromTransform: string | undefined;
+        fromOpacity: number | undefined;
+      }
     >();
 
     renderableEntries.forEach((entry) => {
@@ -386,6 +395,10 @@ export function NavigationStackViewport(
           delay: keyframeResult.delay,
           easing,
           clip: !!spec.clip,
+          fromTransform:
+            phase === 'enter' ? keyframeResult.fromTransform : undefined,
+          fromOpacity:
+            phase === 'enter' ? keyframeResult.fromOpacity : undefined,
         });
       } else {
         animations.set(entry.key, {
@@ -393,6 +406,8 @@ export function NavigationStackViewport(
           delay: 0,
           easing,
           clip: !!spec.clip,
+          fromTransform: undefined,
+          fromOpacity: undefined,
         });
       }
     });
@@ -435,7 +450,7 @@ export function NavigationStackViewport(
           ...props.style,
         }}
       >
-        <style>{dynamicCss || undefined}</style>
+        <style>{dynamicCss || ''}</style>
         {props.renderEmpty?.() ?? null}
       </div>
     );
@@ -455,7 +470,7 @@ export function NavigationStackViewport(
           ...props.style,
         }}
       >
-        {dynamicCss ? <style>{dynamicCss}</style> : null}
+        <style>{dynamicCss || ''}</style>
 
         {renderableEntries.map((entry) => {
           const route = routes[entry.routeName];
@@ -509,6 +524,8 @@ export function NavigationStackViewport(
               animationName={anim?.name}
               animationEasing={anim?.easing}
               animationDelay={anim?.delay}
+              animationFromTransform={anim?.fromTransform}
+              animationFromOpacity={anim?.fromOpacity}
               clipContent={anim?.clip}
             >
               {isActive || state.isTransitioning ? (

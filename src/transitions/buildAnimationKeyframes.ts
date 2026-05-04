@@ -13,6 +13,17 @@ export interface AnimationKeyframeResult {
   css: string;
   /** Animation delay in milliseconds (derived from spec.stagger × sceneIndex). */
   delay: number;
+  /**
+   * CSS `transform` value of the animation's `from` keyframe (e.g. `"translateX(100%)"`).
+   * Apply as an inline style fallback on the entering scene so it starts at the correct
+   * off-screen position during the brief window before @keyframes registers in the cascade.
+   */
+  fromTransform: string | undefined;
+  /**
+   * CSS `opacity` value of the animation's `from` keyframe.
+   * Apply as an inline style fallback on the entering scene for the same reason.
+   */
+  fromOpacity: number | undefined;
 }
 
 function negateValue(value: number | string): number | string {
@@ -272,5 +283,11 @@ export function buildAnimationKeyframes(
     `}`,
   ].join('\n');
 
-  return { name, css, delay };
+  return {
+    name,
+    css,
+    delay,
+    fromTransform: hasTranslate || hasScale ? fromTransform : undefined,
+    fromOpacity: hasOpacity ? opacityFrom : undefined,
+  };
 }
