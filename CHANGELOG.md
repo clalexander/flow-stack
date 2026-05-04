@@ -1,3 +1,10 @@
+## [0.2.1](https://github.com/clalexander/flow-stack/compare/v0.2.0...v0.2.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* apply inline from-keyframe fallback on entering scenes ([48d33bc](https://github.com/clalexander/flow-stack/commit/48d33bc23929503441cafdb82f2e347fe58b3026))
+
 # [0.2.0](https://github.com/clalexander/flow-stack/compare/v0.1.0...v0.2.0) (2026-04-22)
 
 
