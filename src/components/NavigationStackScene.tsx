@@ -33,6 +33,18 @@ export interface NavigationStackSceneProps {
   animationEasing?: string;
   /** Stagger-based delay in milliseconds (`spec.stagger × sceneIndex`). */
   animationDelay?: number;
+  /**
+   * Inline `transform` fallback matching the animation's `from` keyframe.
+   * Applied only on entering scenes so the element starts at the correct off-screen
+   * position during the brief window before `@keyframes` registers in the cascade.
+   * The running animation always overrides this via the animation value layer.
+   */
+  animationFromTransform?: string;
+  /**
+   * Inline `opacity` fallback matching the animation's `from` keyframe.
+   * Same purpose as `animationFromTransform`.
+   */
+  animationFromOpacity?: number;
   /** When true, applies `overflow: hidden` to clip scene content during the transition. */
   clipContent?: boolean;
   children?: ReactNode;
@@ -69,6 +81,8 @@ export function NavigationStackScene(
     pointerEvents: props.isActive ? 'auto' : 'none',
     visibility: props.isActive || props.transitionState ? 'visible' : 'hidden',
     overflow: props.clipContent ? 'hidden' : undefined,
+    transform: props.animationFromTransform,
+    opacity: props.animationFromOpacity,
     animation: props.animationName
       ? `${props.animationName} ${duration}ms ${easing} ${delay}ms both`
       : undefined,

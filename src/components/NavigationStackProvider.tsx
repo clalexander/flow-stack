@@ -582,13 +582,10 @@ export function NavigationStackProvider(
       initialParams: isControlled ? undefined : props.initialParams,
     }),
   );
+  const timeoutRef = useRef<number | null>(null);
   const state = isControlled ? props.state : internalState;
   const stateRef = useRef<NavigationStackState>(state);
-  const timeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    stateRef.current = state;
-  }, [state]);
+  stateRef.current = state;
 
   useEffect(() => {
     return () => {
