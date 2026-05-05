@@ -423,7 +423,7 @@ export function NavigationStackViewport(
   const overflowStyle =
     (state.isTransitioning && state.transition?.spec.clip) ||
     overflowBehavior === 'clip'
-      ? 'hidden'
+      ? 'clip'
       : 'visible';
 
   if (renderableEntries.length === 0) {
