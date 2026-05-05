@@ -334,8 +334,6 @@ export function NavigationStackViewport(
           delay: number;
           easing: string;
           clip: boolean;
-          fromTransform: string | undefined;
-          fromOpacity: number | undefined;
         }
       >(),
     };
@@ -355,8 +353,6 @@ export function NavigationStackViewport(
         delay: number;
         easing: string;
         clip: boolean;
-        fromTransform: string | undefined;
-        fromOpacity: number | undefined;
       }
     >();
 
@@ -395,10 +391,6 @@ export function NavigationStackViewport(
           delay: keyframeResult.delay,
           easing,
           clip: !!spec.clip,
-          fromTransform:
-            phase === 'enter' ? keyframeResult.fromTransform : undefined,
-          fromOpacity:
-            phase === 'enter' ? keyframeResult.fromOpacity : undefined,
         });
       } else {
         animations.set(entry.key, {
@@ -406,8 +398,6 @@ export function NavigationStackViewport(
           delay: 0,
           easing,
           clip: !!spec.clip,
-          fromTransform: undefined,
-          fromOpacity: undefined,
         });
       }
     });
@@ -433,7 +423,7 @@ export function NavigationStackViewport(
   const overflowStyle =
     (state.isTransitioning && state.transition?.spec.clip) ||
     overflowBehavior === 'clip'
-      ? 'hidden'
+      ? 'clip'
       : 'visible';
 
   if (renderableEntries.length === 0) {
@@ -524,8 +514,6 @@ export function NavigationStackViewport(
               animationName={anim?.name}
               animationEasing={anim?.easing}
               animationDelay={anim?.delay}
-              animationFromTransform={anim?.fromTransform}
-              animationFromOpacity={anim?.fromOpacity}
               clipContent={anim?.clip}
             >
               {isActive || state.isTransitioning ? (
