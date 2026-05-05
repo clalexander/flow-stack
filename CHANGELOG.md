@@ -1,3 +1,10 @@
+## [0.2.2](https://github.com/clalexander/flow-stack/compare/v0.2.1...v0.2.2) (2026-05-05)
+
+
+### Bug Fixes
+
+* use overflow: clip on viewport to prevent scroll offset during transitions ([749d261](https://github.com/clalexander/flow-stack/commit/749d261e31ef0fa93236730d88e58b53e080b1a9))
+
 ## [0.2.1](https://github.com/clalexander/flow-stack/compare/v0.2.0...v0.2.1) (2026-05-04)
 
 
