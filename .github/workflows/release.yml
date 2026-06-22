@@ -14,10 +14,66 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  compatibility:
+    name: Compatibility (React ${{ matrix.react }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        react:
+          - '18'
+          - '19'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify dependency signatures
+        run: npm audit signatures
+
+      - name: Install React compatibility version
+        run: >
+          npm install
+          --no-save
+          --package-lock=false
+          react@${{ matrix.react }}
+          react-dom@${{ matrix.react }}
+          @types/react@${{ matrix.react }}
+          @types/react-dom@${{ matrix.react }}
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
   release:
     name: Release
+    needs: compatibility
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
     permissions:
       contents: write
       issues: write
@@ -40,18 +96,6 @@ jobs:
 
       - name: Verify dependency signatures
         run: npm audit signatures
-
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Test
-        run: npm test
 
       - name: Build
         run: npm run build
@@ -76,6 +120,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     permissions:
       pull-requests: write
 
@@ -104,4 +149,4 @@ jobs:
             --head main \
             --title "chore: sync main into dev" \
             --body "Automated post-release sync PR from \`main\` into \`dev\`." \
-          || echo "No sync PR created. This usually means there are no changes to merge."
+            || echo "No sync PR created. This usually means there are no changes to merge."
