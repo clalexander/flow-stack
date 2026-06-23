@@ -1,3 +1,10 @@
+## [0.2.3](https://github.com/clalexander/flow-stack/compare/v0.2.2...v0.2.3) (2026-06-23)
+
+
+### Bug Fixes
+
+* **peer-deps:** limit React peer range to tested majors ([b4e2803](https://github.com/clalexander/flow-stack/commit/b4e28030bd92effcff042cacdc8440a36512c88b))
+
 ## [0.2.2](https://github.com/clalexander/flow-stack/compare/v0.2.1...v0.2.2) (2026-05-05)
 
 
