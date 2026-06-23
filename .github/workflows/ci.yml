@@ -98,9 +98,7 @@ jobs:
 
       - name: Install React compatibility version
         run: >
-          npm install
-          --no-save
-          --package-lock=false
+          pnpm add -D --save-exact
           react@${{ matrix.react }}
           react-dom@${{ matrix.react }}
           @types/react@${{ matrix.react }}
