@@ -98,7 +98,7 @@ jobs:
 
       - name: Install React compatibility version
         run: >
-          pnpm add --dev --save-exact
+          pnpm add -D --save-exact
           react@${{ matrix.react }}
           react-dom@${{ matrix.react }}
           @types/react@${{ matrix.react }}
