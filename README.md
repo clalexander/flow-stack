@@ -32,10 +32,11 @@ Most React navigation libraries assume they own the URL or the full viewport. `f
 ## Installation
 
 ```bash
-npm install flow-stack
+corepack enable
+pnpm install
 ```
 
-Requires React and react-dom ≥ 18.
+Requires React and React DOM 18 or 19.
 
 ## Quick start
 

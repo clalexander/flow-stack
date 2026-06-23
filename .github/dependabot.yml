@@ -7,19 +7,49 @@ updates:
       interval: weekly
       day: monday
       time: '06:00'
+      timezone: America/Chicago
     open-pull-requests-limit: 10
     target-branch: dev
     commit-message:
-      prefix: 'chore'
+      prefix: chore
       include: scope
     labels:
       - dependencies
       - automated
     groups:
-      production-dependencies:
+      production-minor-patch-dependencies:
         dependency-type: production
-      development-dependencies:
+        update-types:
+          - minor
+          - patch
+        exclude-patterns:
+          - react
+          - react-dom
+
+      development-minor-patch-dependencies:
         dependency-type: development
+        update-types:
+          - minor
+          - patch
+        exclude-patterns:
+          - react
+          - react-dom
+          - '@types/react'
+          - '@types/react-dom'
+
+    ignore:
+      - dependency-name: react
+        update-types:
+          - version-update:semver-major
+      - dependency-name: react-dom
+        update-types:
+          - version-update:semver-major
+      - dependency-name: '@types/react'
+        update-types:
+          - version-update:semver-major
+      - dependency-name: '@types/react-dom'
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: github-actions
     directory: /
@@ -27,10 +57,11 @@ updates:
       interval: weekly
       day: monday
       time: '06:30'
+      timezone: America/Chicago
     open-pull-requests-limit: 10
     target-branch: dev
     commit-message:
-      prefix: 'ci'
+      prefix: ci
       include: scope
     labels:
       - dependencies

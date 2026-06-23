@@ -168,6 +168,18 @@ export default defineConfig(
     files: ['**/*.{js,mjs,cjs}'],
     extends: [tseslint.configs.disableTypeChecked],
   },
+
+  // Scripts
+  {
+    files: [
+      'scripts/**/*.{ts,tsx,js,mjs,cjs}',
+      '.github/scripts/**/*.{ts,tsx,js,mjs,cjs}',
+    ],
+    extends: [tseslint.configs.disableTypeChecked],
+    rules: {
+      'no-console': 'off',
+    },
+  },
   // Must be last: disables formatting-related ESLint rules
   eslintConfigPrettier,
 );

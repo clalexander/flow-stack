@@ -14,10 +14,69 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  compatibility:
+    name: Compatibility (React ${{ matrix.react }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        react:
+          - '18'
+          - '19'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify dependency signatures
+        run: pnpm audit
+
+      - name: Install React compatibility version
+        run: >
+          pnpm add -D --save-exact
+          react@${{ matrix.react }}
+          react-dom@${{ matrix.react }}
+          @types/react@${{ matrix.react }}
+          @types/react-dom@${{ matrix.react }}
+
+      - name: Check formatting
+        run: pnpm run format:check
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm run build
+
   release:
     name: Release
+    needs: compatibility
     runs-on: ubuntu-latest
     timeout-minutes: 30
+
     permissions:
       contents: write
       issues: write
@@ -26,35 +85,28 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install --frozen-lockfile
 
       - name: Verify dependency signatures
-        run: npm audit signatures
-
-      - name: Check formatting
-        run: npm run format:check
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Test
-        run: npm test
+        run: pnpm audit
 
       - name: Build
-        run: npm run build
+        run: pnpm run build
 
       - name: Configure Git User
         run: |
@@ -68,7 +120,7 @@ jobs:
           GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-        run: npx semantic-release
+        run: pnpm exec semantic-release
 
   sync-main-into-dev:
     name: Open sync PR to dev
@@ -76,6 +128,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     permissions:
       pull-requests: write
 
@@ -104,4 +157,4 @@ jobs:
             --head main \
             --title "chore: sync main into dev" \
             --body "Automated post-release sync PR from \`main\` into \`dev\`." \
-          || echo "No sync PR created. This usually means there are no changes to merge."
+            || echo "No sync PR created. This usually means there are no changes to merge."

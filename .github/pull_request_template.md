@@ -52,11 +52,11 @@ If this is breaking, describe the change and required migration steps.
 
 What did you do to validate this change?
 
-- [ ] `npm run format`
-- [ ] `npm run lint`
-- [ ] `npm run typecheck`
-- [ ] `npm run test`
-- [ ] `npm run build`
+- [ ] `pnpm run format`
+- [ ] `pnpm run lint`
+- [ ] `pnpm run typecheck`
+- [ ] `pnpm run test`
+- [ ] `pnpm run build`
 
 Describe any additional manual or automated testing performed.
 

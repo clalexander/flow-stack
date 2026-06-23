@@ -1,0 +1,96 @@
+name: React Major Support Watch
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 1 * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: react-major-support-watch
+  cancel-in-progress: false
+
+jobs:
+  open-react-compatibility-pr:
+    name: Open React compatibility PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout dev
+        uses: actions/checkout@v7
+        with:
+          ref: dev
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Update React compatibility files
+        id: update
+        run: node .github/scripts/update-react-major-support.mjs
+
+      - name: Stop if no newer React major exists
+        if: ${{ steps.update.outputs.changed != 'true' }}
+        run: echo "No newer React major support candidate found."
+
+      - name: Configure Git User
+        if: ${{ steps.update.outputs.changed == 'true' }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push branch
+        if: ${{ steps.update.outputs.changed == 'true' }}
+        env:
+          BRANCH: automation/react-${{ steps.update.outputs.candidate-react-major }}-compatibility
+          CANDIDATE_REACT_MAJOR: ${{ steps.update.outputs.candidate-react-major }}
+        run: |
+          set -euo pipefail
+
+          git checkout -B "$BRANCH"
+          git add package.json README.md .github/workflows/ci.yml .github/workflows/release.yml
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "feat(react): add React ${CANDIDATE_REACT_MAJOR} compatibility candidate"
+          git push --force-with-lease origin "$BRANCH"
+
+      - name: Open pull request
+        if: ${{ steps.update.outputs.changed == 'true' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BRANCH: automation/react-${{ steps.update.outputs.candidate-react-major }}-compatibility
+          CANDIDATE_REACT_MAJOR: ${{ steps.update.outputs.candidate-react-major }}
+          LATEST_REACT_VERSION: ${{ steps.update.outputs.latest-react-version }}
+        run: |
+          set -euo pipefail
+
+          if gh pr list \
+            --repo "$REPO" \
+            --base dev \
+            --head "$BRANCH" \
+            --state open \
+            --json number \
+            --jq 'length > 0' | grep -q true; then
+            echo "A React ${CANDIDATE_REACT_MAJOR} compatibility PR already exists."
+            exit 0
+          fi
+
+          gh pr create \
+            --repo "$REPO" \
+            --base dev \
+            --head "$BRANCH" \
+            --title "feat(react): add React ${CANDIDATE_REACT_MAJOR} compatibility candidate" \
+            --body "React ${LATEST_REACT_VERSION} is available on npm. This PR updates Flow Stack's peer dependency range and compatibility matrix to evaluate React ${CANDIDATE_REACT_MAJOR} support.
+
+          Merge this only after the compatibility matrix passes and the public API/runtime behavior is verified."
