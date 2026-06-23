@@ -40,8 +40,10 @@
     "dist",
     "CHANGELOG.md"
   ],
+  "packageManager": "pnpm@11.8.0",
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=20.19.0",
+    "pnpm": ">=11.0.0 <12"
   },
   "sideEffects": false,
   "scripts": {

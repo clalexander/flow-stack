@@ -61,12 +61,13 @@ Examples:
 Typical commands:
 
 ```bash
-npm install
-npm run format
-npm run lint
-npm run typecheck
-npm run test
-npm run build
+corepack enable
+pnpm install
+pnpm run format
+pnpm run lint
+pnpm run typecheck
+pnpm run test
+pnpm run build
 ```
 
 ## Repository Conventions
@@ -90,10 +91,10 @@ We separate formatting from linting:
 Before opening a pull request, run:
 
 ```bash
-npm run format
-npm run lint
-npm run typecheck
-npm run test
+pnpm run format
+pnpm run lint
+pnpm run typecheck
+pnpm run test
 ```
 
 ## Tests
