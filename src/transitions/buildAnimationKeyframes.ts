@@ -103,9 +103,7 @@ const SPRING_EASING_CSS = buildSpringLinearEasing();
  */
 export function resolveEasingCSS(
   curve:
-    | NavigationTransitionCurveToken
-    | ((progress: number) => number)
-    | undefined,
+    NavigationTransitionCurveToken | ((progress: number) => number) | undefined,
 ): string {
   if (!curve || typeof curve === 'function') {
     return 'ease';
