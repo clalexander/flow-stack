@@ -75,8 +75,7 @@ export interface NavigationTransitionSpec {
    * Falls back to `{ ...spec, duration: 0 }` if not set.
    */
   reducedMotionPreset?:
-    | NavigationTransitionPresetName
-    | NavigationTransitionSpec;
+    NavigationTransitionPresetName | NavigationTransitionSpec;
 }
 
 /** Context passed to a `NavigationTransitionResolver` function to compute a transition spec. */

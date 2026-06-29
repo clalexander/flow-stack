@@ -25,12 +25,7 @@ export type NavigationMeta = Record<string, unknown>;
  * `'auto'` defers to the viewport's `anchorAnimationPolicy` calculation.
  */
 export type NavigationAnchor =
-  | 'left'
-  | 'right'
-  | 'top'
-  | 'bottom'
-  | 'center'
-  | 'auto';
+  'left' | 'right' | 'top' | 'bottom' | 'center' | 'auto';
 
 /** The scroll axis of the transition animation. `'auto'` is resolved from the `anchor`. */
 export type NavigationOrientation = 'horizontal' | 'vertical' | 'auto';
@@ -59,9 +54,7 @@ export type NavigationDirection = 'forward' | 'backward' | 'neutral' | 'auto';
  * - `'keep-alive'` — all entries that have ever been active remain mounted.
  */
 export type NavigationMountStrategy =
-  | 'active-only'
-  | 'active-plus-previous'
-  | 'keep-alive';
+  'active-only' | 'active-plus-previous' | 'keep-alive';
 
 /**
  * How content is clipped at the viewport boundary during transitions:
@@ -140,10 +133,7 @@ export type NavigationScenePhase = 'enter' | 'active' | 'exit' | 'inactive';
  * - `'inactive'` — the entry is in the back-stack but not visible.
  */
 export type NavigationEntryState =
-  | 'entering'
-  | 'active'
-  | 'exiting'
-  | 'inactive';
+  'entering' | 'active' | 'exiting' | 'inactive';
 
 /**
  * Cache behaviour for a route's component instance:
