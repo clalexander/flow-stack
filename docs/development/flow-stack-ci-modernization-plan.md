@@ -1,10 +1,10 @@
 # Flow Stack CI Modernization Architecture and Implementation Plan
 
-> Status: IN PROGRESS
+> Status: AWAITING ACCEPTANCE
 >
 > Plan version: 5.0
 >
-> Revision: 11
+> Revision: 13
 >
 > Last updated: 2026-09-02
 >
@@ -156,16 +156,18 @@ An ignored `package-lock.json` exists locally but is not authoritative. `pnpm-lo
 | 9        | 3.0          | 2026-09-02 | IN PROGRESS         | Recorded explicit Phase 1 acceptance and Phase 2 authorization; activated package and supply-chain validation tasks P2-T001 through P2-T004.                                                                   | User authorization                        |
 | 10       | 4.0          | 2026-09-02 | IN PROGRESS         | Removed the monorepo-derived hard-coded package metadata and file-list validator; `package.json` remains authoritative, established analyzers interpret it, and the local script tests only packed consumers.  | User direction                            |
 | 11       | 5.0          | 2026-09-02 | IN PROGRESS         | Removed package validation entirely, including its script, package commands, analyzers, packed-consumer requirements, and workflow plan; Phase 2 now covers only distinct audits and action-tag normalization. | User direction                            |
+| 12       | 5.0          | 2026-09-02 | IN PROGRESS         | Authorized patched transitive overrides for `nanoid@3.3.18` and `browserslist@4.28.8` after the new fail-closed vulnerability audit identified three high-severity advisories.                                 | User authorization                        |
+| 13       | 5.0          | 2026-09-02 | AWAITING ACCEPTANCE | Completed active Phase 2 audit and action-normalization tasks, remediated three high-severity transitive advisories, and recorded local validation plus the remaining GitHub-hosted workflow evidence.         | Phase 2 closeout                          |
 
 ## Phase Status
 
-| Phase | Conceptual Boundary                                                | Status      | Backlog Progress        | Authorization       | Acceptance          | Revision |
-| ----- | ------------------------------------------------------------------ | ----------- | ----------------------- | ------------------- | ------------------- | -------- |
-| 1     | Canonical verification and React compatibility                     | COMPLETE    | 5 / 5 complete          | Received 2026-09-02 | Received 2026-09-02 | 9        |
-| 2     | Supply-chain validation and action normalization                   | IN PROGRESS | 0 / 2 active; 2 removed | Received 2026-09-02 | Not received        | 11       |
-| 3     | Credentialed release and generated-PR automation                   | NOT STARTED | 0 / 5 complete          | Not received        | Not received        | 2        |
-| 4     | Dependabot grouping, promotion, and policy                         | NOT STARTED | 0 / 4 complete          | Not received        | Not received        | 2        |
-| 5     | Branch enforcement, operations documentation, and end-to-end proof | NOT STARTED | 0 / 4 complete          | Not received        | Not received        | 2        |
+| Phase | Conceptual Boundary                                                | Status              | Backlog Progress                 | Authorization       | Acceptance          | Revision |
+| ----- | ------------------------------------------------------------------ | ------------------- | -------------------------------- | ------------------- | ------------------- | -------- |
+| 1     | Canonical verification and React compatibility                     | COMPLETE            | 5 / 5 complete                   | Received 2026-09-02 | Received 2026-09-02 | 9        |
+| 2     | Supply-chain validation and action normalization                   | AWAITING ACCEPTANCE | 2 / 2 active complete; 2 removed | Received 2026-09-02 | Not received        | 13       |
+| 3     | Credentialed release and generated-PR automation                   | NOT STARTED         | 0 / 5 complete                   | Not received        | Not received        | 2        |
+| 4     | Dependabot grouping, promotion, and policy                         | NOT STARTED         | 0 / 4 complete                   | Not received        | Not received        | 2        |
+| 5     | Branch enforcement, operations documentation, and end-to-end proof | NOT STARTED         | 0 / 4 complete                   | Not received        | Not received        | 2        |
 
 ## Requirement Sources
 
@@ -872,7 +874,7 @@ Validate dependency authenticity/advisories and normalize GitHub Action referenc
 
 ### Status and Gate
 
-- Status: IN PROGRESS
+- Status: AWAITING ACCEPTANCE
 - Start requires: Phase 1 accepted and `Authorize Phase 2.`
 - Exit requires: all Phase 2 criteria and explicit user acceptance
 - Mandatory stop: request manual prerequisites and Phase 3 authorization
@@ -888,17 +890,18 @@ SR-006, TR-002, AR-006, DEC-008
 
 ### Phase Task Backlog
 
-| Task ID | Task                                                      | Requirements   | Detailed Step | Dependencies | Deliverable                     | Verification          | Status      |
-| ------- | --------------------------------------------------------- | -------------- | ------------- | ------------ | ------------------------------- | --------------------- | ----------- |
-| P2-T001 | Add package analyzers and packed-artifact validator       | TR-002, TR-003 | 2.1           | Phase 1      | Removed by revision 11          | User direction        | REMOVED     |
-| P2-T002 | Add package smoke tests                                   | TR-003         | 2.2           | P2-T001      | Removed by revision 11          | User direction        | REMOVED     |
-| P2-T003 | Add distinct vulnerability/signature audits               | SR-006         | 2.3           | None         | Accurately named workflow steps | Reusable workflow run | NOT STARTED |
-| P2-T004 | Integrate audit gates and normalize remaining action tags | TR-002, AR-006 | 2.4           | P2-T003      | Updated `verify.yml`            | Full verification run | NOT STARTED |
+| Task ID | Task                                                      | Requirements   | Detailed Step | Dependencies | Deliverable                     | Verification          | Status   |
+| ------- | --------------------------------------------------------- | -------------- | ------------- | ------------ | ------------------------------- | --------------------- | -------- |
+| P2-T001 | Add package analyzers and packed-artifact validator       | TR-002, TR-003 | 2.1           | Phase 1      | Removed by revision 11          | User direction        | REMOVED  |
+| P2-T002 | Add package smoke tests                                   | TR-003         | 2.2           | P2-T001      | Removed by revision 11          | User direction        | REMOVED  |
+| P2-T003 | Add distinct vulnerability/signature audits               | SR-006         | 2.3           | None         | Accurately named workflow steps | Reusable workflow run | COMPLETE |
+| P2-T004 | Integrate audit gates and normalize remaining action tags | TR-002, AR-006 | 2.4           | P2-T003      | Updated `verify.yml`            | Full verification run | COMPLETE |
 
 ### File Allowlist
 
 - `package.json`
 - `pnpm-lock.yaml`
+- `pnpm-workspace.yaml` only for the authorized `nanoid@3.3.18` and `browserslist@4.28.8` security overrides
 - `.github/workflows/verify.yml`
 - Other existing workflow files only for normalizing action references to major-version tags
 - This planning document
@@ -952,7 +955,29 @@ Also validate both audit steps in GitHub's clean runner environment.
 
 ### Phase Closeout
 
-Stop and await acceptance, completion of M-001 through M-003, and Phase 3 authorization.
+- Status: AWAITING ACCEPTANCE
+- Authorization received: 2026-09-02 (`Phase 1 accepted. Authorize Phase 2`)
+- Started on: 2026-09-02
+- Completed on: 2026-09-02
+- Plan revision at start: 9
+- Plan revision at closeout: 13
+- Requirements addressed: SR-006, TR-002, AR-006, DEC-008
+- Backlog results:
+  - Completed: P2-T003, P2-T004
+  - Removed by approved revision: P2-T001 and P2-T002 because package validation is not required for this single-package repository
+  - Remaining: None
+  - Tasks added during implementation: None
+- Changed files: `.github/workflows/verify.yml`, `.github/workflows/pr-title.yml`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, and this plan
+- Public API changes: None
+- Data or migration changes: None
+- Semantic case results: vulnerability and signature controls are distinct and fail closed; all third-party Actions use maintained major-version tags.
+- Validation: `pnpm audit` PASS (no known vulnerabilities); `npm audit signatures` PASS (2,555 signed packages and 573 attestations); frozen lockfile PASS; patched `nanoid@3.3.18` and `browserslist@4.28.8` resolutions confirmed; build PASS; typecheck PASS; tests PASS (31 files, 263 tests, no type errors); lint PASS; format check PASS; workspace diagnostics PASS; `git diff --check` PASS
+- Automated repairs: Prettier applied to this plan after revisions 12 and 13
+- Security and operational evidence: The initial advisory audit failed on three high-severity transitive advisories. Authorized overrides upgraded `nanoid` from 3.3.17 to 3.3.18 and `browserslist` from 4.28.4 to 4.28.8; the audit then passed. Signature verification remained successful.
+- Manual configuration evidence: None required in Phase 2
+- Deviations: Revisions 10-11 removed the inapplicable package-validation pattern; revision 12 authorized transitive security remediation.
+- Unresolved issues: The updated reusable workflow still requires a successful GitHub-hosted run to confirm clean-runner audit and aggregate behavior. The existing Vitest shutdown timeout warning remains after all tests pass and is outside this phase's scope.
+- Next action: STOP. Await explicit Phase 2 acceptance, completion of M-001 through M-003, and Phase 3 authorization.
 
 ## Phase 3: Credentialed Release and Generated-PR Automation
 
@@ -1387,10 +1412,10 @@ The initiative is complete only when:
 ## Handoff to Implementing Agent
 
 - Canonical plan: `docs/development/flow-stack-ci-modernization-plan.md`
-- Authorized phase: Phase 2
-- Plan version/revision: 5.0/11
+- Authorized phase: Phase 2 implementation complete; no further phase authorized
+- Plan version/revision: 5.0/13
 - Baseline commit: `525e8d7817b205d39b33f37b938655a1a8cad775`
 - Mandatory first action: Read the canonical plan in full.
-- Active phase backlog: P2-T003, P2-T004; P2-T001 and P2-T002 were removed by revision 11
-- Stop condition: Complete Phase 2 closeout, then request acceptance, manual prerequisites, and explicit Phase 3 authorization.
+- Active phase backlog: None; Phase 2 is awaiting acceptance. P2-T001 and P2-T002 were removed by revision 11.
+- Stop condition: Request Phase 2 acceptance, completion of M-001 through M-003, and explicit Phase 3 authorization.
 - Prohibited action: Do not plan or begin the next phase without rereading this plan and receiving authorization.
