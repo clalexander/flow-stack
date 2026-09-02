@@ -1,10 +1,10 @@
 # Flow Stack CI Modernization Architecture and Implementation Plan
 
-> Status: AWAITING ACCEPTANCE
+> Status: IN PROGRESS
 >
-> Plan version: 3.0
+> Plan version: 5.0
 >
-> Revision: 8
+> Revision: 11
 >
 > Last updated: 2026-09-02
 >
@@ -18,9 +18,9 @@
 >
 > Canonical location: `docs/development/flow-stack-ci-modernization-plan.md`
 >
-> Current phase: Phase 1
+> Current phase: Phase 2
 >
-> Implementation authorization: Phase 1 granted on 2026-09-02 (`Plan accepted. Begin Phase 1`)
+> Implementation authorization: Phase 2 granted on 2026-09-02 (`Phase 1 accepted. Authorize Phase 2`)
 >
 > Supersedes: None
 
@@ -45,7 +45,7 @@ Make Flow Stack's automation reliable, secure, understandable, and maintainable 
 3. Remove duplicated React compatibility lists and repair React-major automation.
 4. Use least-privilege, short-lived credentials for npm publishing and repository mutation.
 5. Consolidate Dependabot into exactly one open grouped npm version-update PR and one open grouped GitHub Actions version-update PR, both reviewable and promotable from `dev` to `main`.
-6. Validate the actual npm package contents and public module/type entry points.
+6. Keep `package.json` authoritative for the package contract without repository-specific validation wrappers.
 7. Establish branch rulesets, a GitHub App, a protected release environment, and npm Trusted Publishing through explicit manual steps.
 8. Keep release and recovery procedures in repository documentation.
 
@@ -58,7 +58,6 @@ Make Flow Stack's automation reliable, secure, understandable, and maintainable 
 - Dependabot does not fan out routine updates by dependency: all eligible npm updates share one PR and all eligible GitHub Actions updates share one PR.
 - No long-lived npm token is stored; npm publishing uses GitHub OIDC Trusted Publishing.
 - semantic-release receives a GitHub App token only in its mutation step and checkout never persists credentials.
-- The packed tarball is checked for metadata, exports, CommonJS, ESM, and types before publication.
 - `main` and `dev` are protected by stable required checks and restricted update rules.
 
 ## Scope
@@ -74,7 +73,6 @@ Make Flow Stack's automation reliable, secure, understandable, and maintainable 
 - `.github/dependabot.yml`
 - `.github/scripts/update-react-major-support.ts` and focused tests
 - `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, and `release.config.mjs`
-- Package metadata and tarball validation scripts and tests
 - Release, automation, and contributor documentation
 - Manual GitHub ruleset, environment, GitHub App, and npm Trusted Publisher configuration
 
@@ -129,42 +127,45 @@ Unambiguous authorization examples:
 
 ## Planning Baseline
 
-| Field                          | Value                                                                                     | Evidence                                                                          |
-| ------------------------------ | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Repository root                | `C:\Users\clale\Projects\Work\Self\flow-stack`                                            | Workspace inspection                                                              |
-| Branch                         | `ci/update`                                                                               | `git branch --show-current`                                                       |
-| Baseline commit                | `525e8d7817b205d39b33f37b938655a1a8cad775`                                                | `git rev-parse HEAD`                                                              |
-| Working tree                   | Clean                                                                                     | `git status --short` returned no entries                                          |
-| Relevant components            | GitHub workflows, Dependabot, semantic-release, package validation, release documentation | `.github/`, `package.json`, `release.config.mjs`, `CONTRIBUTING.md`               |
-| Existing Flow Stack plans/docs | No `/docs` tree existed at baseline                                                       | Workspace file search                                                             |
-| Comparison source              | Synaptech `npm-packages` automation and `docs/development/release.md`                     | Repository inspection                                                             |
-| Recent automation history      | Action upgrades and dependency update commits are active on the branch                    | `git log -5 --oneline -- .github package.json release.config.mjs CONTRIBUTING.md` |
-| Toolchain                      | Node 20.19+; pnpm 10; CI uses Node 20, 22, and 24                                         | `package.json`, `.github/workflows/ci.yml`                                        |
+| Field                          | Value                                                                                   | Evidence                                                                          |
+| ------------------------------ | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Repository root                | `C:\Users\clale\Projects\Work\Self\flow-stack`                                          | Workspace inspection                                                              |
+| Branch                         | `ci/update`                                                                             | `git branch --show-current`                                                       |
+| Baseline commit                | `525e8d7817b205d39b33f37b938655a1a8cad775`                                              | `git rev-parse HEAD`                                                              |
+| Working tree                   | Clean                                                                                   | `git status --short` returned no entries                                          |
+| Relevant components            | GitHub workflows, Dependabot, semantic-release, package metadata, release documentation | `.github/`, `package.json`, `release.config.mjs`, `CONTRIBUTING.md`               |
+| Existing Flow Stack plans/docs | No `/docs` tree existed at baseline                                                     | Workspace file search                                                             |
+| Comparison source              | Synaptech `npm-packages` automation and `docs/development/release.md`                   | Repository inspection                                                             |
+| Recent automation history      | Action upgrades and dependency update commits are active on the branch                  | `git log -5 --oneline -- .github package.json release.config.mjs CONTRIBUTING.md` |
+| Toolchain                      | Node 20.19+; pnpm 10; CI uses Node 20, 22, and 24                                       | `package.json`, `.github/workflows/ci.yml`                                        |
 
 An ignored `package-lock.json` exists locally but is not authoritative. `pnpm-lock.yaml` remains the only lockfile in scope.
 
 ## Revision Log
 
-| Revision | Plan Version | Date       | Status              | Summary                                                                                                                                                                                                 | Author/Source                             |
-| -------- | ------------ | ---------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| 1        | 1.0          | 2026-09-02 | READY FOR REVIEW    | Initial architecture and phased implementation plan.                                                                                                                                                    | Initiative Architect                      |
-| 2        | 2.0          | 2026-09-02 | READY FOR REVIEW    | Replaced production/development npm PR groups with one catch-all npm group, added one catch-all GitHub Actions group, limited each ecosystem to one open PR, and aligned promotion/release semantics.   | User direction                            |
-| 3        | 2.0          | 2026-09-02 | IN PROGRESS         | Recorded Phase 1 authorization and added `vitest.config.ts` to its allowlist so the planned `test/tooling` suite runs in the Node test project.                                                         | Phase 1 implementation                    |
-| 4        | 3.0          | 2026-09-02 | IN PROGRESS         | Replaced immutable action SHA pinning with maintained major-version tags such as `@v7`, accepting tag mutability and relying on grouped Dependabot review for updates.                                  | User direction                            |
-| 5        | 3.0          | 2026-09-02 | IN PROGRESS         | Broadened Node test discovery to all `.test.ts` files outside jsdom/type-owned trees and allowed a colocated `.d.mts` boundary for importable React support tooling.                                    | User direction and Phase 1 implementation |
-| 6        | 3.0          | 2026-09-02 | IN PROGRESS         | Replaced the React support `.mjs` implementation and declaration pair with directly executable TypeScript GitHub scripts under the existing Node 24 runtime policy.                                     | User direction                            |
-| 7        | 3.0          | 2026-09-02 | IN PROGRESS         | Recorded authorization to add direct `@types/node` development declarations required to typecheck the TypeScript GitHub CLI without local hand-written Node API declarations.                           | User authorization                        |
-| 8        | 3.0          | 2026-09-02 | AWAITING ACCEPTANCE | Completed the Phase 1 backlog and recorded focused, repository-wide, runtime, diagnostic, formatting, and diff validation evidence; hosted GitHub job-graph confirmation remains a PR acceptance check. | Phase 1 closeout                          |
+| Revision | Plan Version | Date       | Status              | Summary                                                                                                                                                                                                        | Author/Source                             |
+| -------- | ------------ | ---------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| 1        | 1.0          | 2026-09-02 | READY FOR REVIEW    | Initial architecture and phased implementation plan.                                                                                                                                                           | Initiative Architect                      |
+| 2        | 2.0          | 2026-09-02 | READY FOR REVIEW    | Replaced production/development npm PR groups with one catch-all npm group, added one catch-all GitHub Actions group, limited each ecosystem to one open PR, and aligned promotion/release semantics.          | User direction                            |
+| 3        | 2.0          | 2026-09-02 | IN PROGRESS         | Recorded Phase 1 authorization and added `vitest.config.ts` to its allowlist so the planned `test/tooling` suite runs in the Node test project.                                                                | Phase 1 implementation                    |
+| 4        | 3.0          | 2026-09-02 | IN PROGRESS         | Replaced immutable action SHA pinning with maintained major-version tags such as `@v7`, accepting tag mutability and relying on grouped Dependabot review for updates.                                         | User direction                            |
+| 5        | 3.0          | 2026-09-02 | IN PROGRESS         | Broadened Node test discovery to all `.test.ts` files outside jsdom/type-owned trees and allowed a colocated `.d.mts` boundary for importable React support tooling.                                           | User direction and Phase 1 implementation |
+| 6        | 3.0          | 2026-09-02 | IN PROGRESS         | Replaced the React support `.mjs` implementation and declaration pair with directly executable TypeScript GitHub scripts under the existing Node 24 runtime policy.                                            | User direction                            |
+| 7        | 3.0          | 2026-09-02 | IN PROGRESS         | Recorded authorization to add direct `@types/node` development declarations required to typecheck the TypeScript GitHub CLI without local hand-written Node API declarations.                                  | User authorization                        |
+| 8        | 3.0          | 2026-09-02 | AWAITING ACCEPTANCE | Completed the Phase 1 backlog and recorded focused, repository-wide, runtime, diagnostic, formatting, and diff validation evidence; hosted GitHub job-graph confirmation remains a PR acceptance check.        | Phase 1 closeout                          |
+| 9        | 3.0          | 2026-09-02 | IN PROGRESS         | Recorded explicit Phase 1 acceptance and Phase 2 authorization; activated package and supply-chain validation tasks P2-T001 through P2-T004.                                                                   | User authorization                        |
+| 10       | 4.0          | 2026-09-02 | IN PROGRESS         | Removed the monorepo-derived hard-coded package metadata and file-list validator; `package.json` remains authoritative, established analyzers interpret it, and the local script tests only packed consumers.  | User direction                            |
+| 11       | 5.0          | 2026-09-02 | IN PROGRESS         | Removed package validation entirely, including its script, package commands, analyzers, packed-consumer requirements, and workflow plan; Phase 2 now covers only distinct audits and action-tag normalization. | User direction                            |
 
 ## Phase Status
 
-| Phase | Conceptual Boundary                                                | Status              | Backlog Progress | Authorization       | Acceptance   | Revision |
-| ----- | ------------------------------------------------------------------ | ------------------- | ---------------- | ------------------- | ------------ | -------- |
-| 1     | Canonical verification and React compatibility                     | AWAITING ACCEPTANCE | 5 / 5 complete   | Received 2026-09-02 | Not received | 8        |
-| 2     | Package and supply-chain validation                                | NOT STARTED         | 0 / 4 complete   | Not received        | Not received | 2        |
-| 3     | Credentialed release and generated-PR automation                   | NOT STARTED         | 0 / 5 complete   | Not received        | Not received | 2        |
-| 4     | Dependabot grouping, promotion, and policy                         | NOT STARTED         | 0 / 4 complete   | Not received        | Not received | 2        |
-| 5     | Branch enforcement, operations documentation, and end-to-end proof | NOT STARTED         | 0 / 4 complete   | Not received        | Not received | 2        |
+| Phase | Conceptual Boundary                                                | Status      | Backlog Progress        | Authorization       | Acceptance          | Revision |
+| ----- | ------------------------------------------------------------------ | ----------- | ----------------------- | ------------------- | ------------------- | -------- |
+| 1     | Canonical verification and React compatibility                     | COMPLETE    | 5 / 5 complete          | Received 2026-09-02 | Received 2026-09-02 | 9        |
+| 2     | Supply-chain validation and action normalization                   | IN PROGRESS | 0 / 2 active; 2 removed | Received 2026-09-02 | Not received        | 11       |
+| 3     | Credentialed release and generated-PR automation                   | NOT STARTED | 0 / 5 complete          | Not received        | Not received        | 2        |
+| 4     | Dependabot grouping, promotion, and policy                         | NOT STARTED | 0 / 4 complete          | Not received        | Not received        | 2        |
+| 5     | Branch enforcement, operations documentation, and end-to-end proof | NOT STARTED | 0 / 4 complete          | Not received        | Not received        | 2        |
 
 ## Requirement Sources
 
@@ -207,7 +208,7 @@ An ignored `package-lock.json` exists locally but is not authoritative. `pnpm-lo
 
 | ID     | Requirement                                                                                                                                                                             | Source           | Verification                                 | Status |
 | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | -------------------------------------------- | ------ |
-| AR-001 | A reusable workflow owns quality, package, and compatibility verification; CI and release call it instead of duplicating steps.                                                         | SRC-001, SRC-002 | Workflow graph review                        | ACTIVE |
+| AR-001 | A reusable workflow owns quality and compatibility verification; CI and release call it instead of duplicating steps.                                                                   | SRC-001, SRC-002 | Workflow graph review                        | ACTIVE |
 | AR-002 | A final `Verification` job uses `if: always()` and fails unless every required upstream job succeeded. Branch rules depend on this stable check rather than dynamic matrix check names. | SRC-001, SRC-005 | Failure/cancellation workflow tests          | ACTIVE |
 | AR-003 | semantic-release remains the release engine and public npm remains the publication target.                                                                                              | SRC-005, SRC-007 | Release config and controlled dry run        | ACTIVE |
 | AR-004 | Existing committed `package.json` version and `CHANGELOG.md` release artifacts remain enabled.                                                                                          | SRC-005          | semantic-release dry run and release commit  | ACTIVE |
@@ -232,13 +233,13 @@ An ignored `package-lock.json` exists locally but is not authoritative. `pnpm-lo
 
 ### Testing and Validation Requirements
 
-| ID     | Requirement                                                                                                                                                                      | Source           | Verification                    | Status |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------------- | ------ |
-| TR-001 | React support parsing and update generation must have Vitest coverage for no-op, next-major, malformed range, mismatched React DOM, README replacement, and write-failure cases. | SRC-002, SRC-005 | Focused Vitest suite            | ACTIVE |
-| TR-002 | Verification must run format check, lint, typecheck, build, tests, vulnerability audit, signature audit, metadata validation, and package-content validation.                    | SRC-002, SRC-006 | Reusable workflow logs          | ACTIVE |
-| TR-003 | The packed artifact must prove ESM import, CommonJS require, and declaration resolution from the tarball rather than repository source.                                          | SRC-001, SRC-006 | Package smoke-test script       | ACTIVE |
-| TR-004 | Workflow event filters, result aggregation, branch collision handling, and dry-run paths require reviewable tests or controlled GitHub runs before enforcement.                  | SRC-001, SRC-003 | Test records and phase evidence | ACTIVE |
-| TR-005 | Validation uses the repository's active Node/pnpm toolchain and does not install dependencies or alter the machine without explicit permission.                                  | SRC-004          | Command record                  | ACTIVE |
+| ID     | Requirement                                                                                                                                                                             | Source           | Verification                    | Status  |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | ------------------------------- | ------- |
+| TR-001 | React support parsing and update generation must have Vitest coverage for no-op, next-major, malformed range, mismatched React DOM, README replacement, and write-failure cases.        | SRC-002, SRC-005 | Focused Vitest suite            | ACTIVE  |
+| TR-002 | Verification must run format check, lint, typecheck, build, tests, vulnerability audit, and signature audit.                                                                            | SRC-002, SRC-006 | Reusable workflow logs          | ACTIVE  |
+| TR-003 | Packed-artifact consumer validation was removed because this single-package repository treats `package.json` as authoritative and does not need the copied monorepo validation pattern. | User direction   | Revision 11                     | REMOVED |
+| TR-004 | Workflow event filters, result aggregation, branch collision handling, and dry-run paths require reviewable tests or controlled GitHub runs before enforcement.                         | SRC-001, SRC-003 | Test records and phase evidence | ACTIVE  |
+| TR-005 | Validation uses the repository's active Node/pnpm toolchain and does not install dependencies or alter the machine without explicit permission.                                         | SRC-004          | Command record                  | ACTIVE  |
 
 ### Process and Handoff Requirements
 
@@ -260,7 +261,7 @@ An ignored `package-lock.json` exists locally but is not authoritative. `pnpm-lo
 | AC-005 | Dependabot exposes no more than one open scheduled npm update PR and one open scheduled GitHub Actions update PR; merging either creates one draft promotion PR at the exact merge SHA. | FR-004, FR-007, DR-003, SR-007 | Dependabot PR list and controlled workflow runs |
 | AC-006 | Repository checkout/config/log review finds no persisted or exposed App/npm credentials.                                                                                                | SR-001, SR-002, SR-004         | Workflow and log review                         |
 | AC-007 | Branch rules block direct human pushes, force pushes, deletion, and merging without required checks while allowing the App's release commit.                                            | SR-008                         | Controlled ruleset tests                        |
-| AC-008 | The packed package passes ESM, CommonJS, and type-consumer smoke tests before publish.                                                                                                  | TR-002, TR-003                 | Reusable workflow logs                          |
+| AC-008 | Removed: packed package validation is not part of this single-package repository's CI contract.                                                                                         | None                           | User direction, revision 11                     |
 
 ## Assumptions and Constraints
 
@@ -351,10 +352,8 @@ flowchart LR
   MP[Push to main] --> R[Release caller]
   R --> V
   V --> Q[Quality and audits]
-  V --> PM[Package validation]
   V --> MX[Derived Node x React matrix]
   Q --> A[Stable Verification check]
-  PM --> A
   MX --> A
   A -->|success| SR[semantic-release]
   OIDC[GitHub OIDC] --> SR
@@ -391,7 +390,7 @@ flowchart LR
 | DEC-005 | Use npm Trusted Publishing through protected environment `npm`.                                                                                                                  | Avoids long-lived npm tokens and produces provenance.                                                                | Stored `NPM_TOKEN`.                                                                                                           | External npm/GitHub setup becomes a release prerequisite.                                                                                                                        | Trusted Publishing is unavailable for the package.                                              |
 | DEC-006 | Configure one catch-all npm group and one catch-all GitHub Actions group, each with `open-pull-requests-limit: 1`, and promote either merged group through a draft fixed-SHA PR. | Directly prevents per-dependency/action PR fan-out while preserving one review and promotion boundary per ecosystem. | Production/development npm groups; per-update PRs; one mixed cross-ecosystem PR, which Dependabot cannot produce; auto-merge. | Development-only npm updates now use `chore(deps)` and can produce a patch release; Actions use `ci(deps)` and remain non-releasing. React majors stay in the dedicated watcher. | Dependabot supports a safe cross-ecosystem group or release classification requirements change. |
 | DEC-007 | Pin actions to maintained major-version tags such as `@v7`.                                                                                                                      | Keeps action references readable and aligned with the repository's preferred Dependabot update model.                | Full commit SHAs; minor/patch tags.                                                                                           | Upstream tags are mutable; least privilege, established publishers, and grouped Dependabot review mitigate but do not eliminate that risk.                                       | Repository policy changes to require immutable action references.                               |
-| DEC-008 | Add package validation through focused repository scripts and established package-analysis tools.                                                                                | Tests the published contract rather than only source tests.                                                          | Copy monorepo directory validators; source-only tests.                                                                        | Adds development dependencies and CI time.                                                                                                                                       | Tooling cannot support dual ESM/CJS output.                                                     |
+| DEC-008 | Do not add repository-specific package validation, analyzers, packed-consumer scripts, or package commands; `package.json` is authoritative.                                     | The copied pattern solves cross-package consistency in a monorepo, which does not apply to this repository.          | Metadata mirrors, package analyzers, and packed-consumer wrappers.                                                            | Phase 2 validates supply-chain controls without maintaining a second package-contract mechanism.                                                                                 | The repository becomes a monorepo with package-level consistency requirements.                  |
 
 ## Canonical Patterns and Contracts
 
@@ -403,7 +402,6 @@ flowchart LR
 | PAT-002    | Compatibility source | Pure peer-range parser and JSON matrix output            | `.github/scripts/react-support.ts`         | Verification and React watcher |
 | PAT-003    | Repository mutation  | Ephemeral GitHub App token and temporary Git auth header | Release/generated PR jobs                  | semantic-release and `gh`      |
 | PAT-004    | Dependency promotion | Event predicates plus fixed merge-SHA branch             | `.github/workflows/dependency-release.yml` | Dependabot merge events        |
-| PAT-005    | Publish contract     | Build, pack, inspect, and consumer smoke test            | `scripts/validate-package.mjs`             | Verification and release       |
 
 ### PAT-001: Reusable Verification Workflow
 
@@ -434,9 +432,6 @@ jobs:
   quality:
     # Frozen install, audits, format, lint.
 
-  package:
-    # Build, metadata validation, pack and consumer smoke tests.
-
   compatibility:
     needs: matrix
     strategy:
@@ -449,7 +444,7 @@ jobs:
   verification:
     name: Verification
     if: ${{ always() }}
-    needs: [matrix, quality, package, compatibility]
+    needs: [matrix, quality, compatibility]
     # Exit success only when every needs.*.result is success.
 ```
 
@@ -505,15 +500,11 @@ The workflow accepts only a merged PR where all conditions hold:
 
 It creates `release/dependencies-<PR number>` at that merge SHA only when absent. An existing branch at another SHA is a hard failure. An existing matching PR is a no-op. Deletion after merge requires matching branch syntax and exact merged head SHA.
 
-### PAT-005: Package Validation
-
-`package:validate` checks repository metadata and invokes established analyzers such as `publint` and `@arethetypeswrong/cli` against built output. `package:pack` creates a tarball in a repository-local ignored staging directory, inspects its file list, and runs isolated ESM, CommonJS, and TypeScript consumers against the tarball. Tests must clean staging through the script's normal finally path; no user-level temp paths are used.
-
 ## Public API and Compatibility
 
 | Surface                 | Current                                       | Target                                 | Compatibility Strategy                   | Phase |
 | ----------------------- | --------------------------------------------- | -------------------------------------- | ---------------------------------------- | ----- |
-| Package runtime API     | Existing Flow Stack exports                   | Unchanged                              | Package validation only                  | 2     |
+| Package runtime API     | Existing Flow Stack exports                   | Unchanged                              | `package.json` remains authoritative     | N/A   |
 | React peer support      | `>=18 <20` duplicated in YAML/docs            | Same range, package metadata canonical | Derived matrix and generated docs update | 1     |
 | Node support            | `>=20.19.0`; matrix 20/22/24 in CI            | Unchanged; same matrix blocks release  | Explicit reusable matrix                 | 1     |
 | Workflow required check | Individual/unstable jobs                      | `Verification` aggregate               | Run once before enabling rules           | 1/5   |
@@ -604,21 +595,18 @@ Rollback is performed by reverting workflow/configuration commits and restoring 
 
 ## Testing Strategy
 
-| Layer               | Responsibility                                                        | Location                                    | Required Cases                                              |
-| ------------------- | --------------------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------------- |
-| Unit                | Peer parsing and update transformations                               | `test/tooling/react-support.test.ts`        | RCT-001 through RCT-003 plus malformed/read-write integrity |
-| Unit                | Metadata/package validator helpers                                    | `test/tooling/package-validation.test.ts`   | Missing/mismatched exports, peers, files, engines           |
-| Workflow review     | Trigger, permission, major action tag, aggregate, collision semantics | `.github/workflows/*.yml`                   | VER, REL, DEP, PR cases                                     |
-| Package integration | Built tarball consumers                                               | Repository-local staging via package script | ESM, CJS, types                                             |
-| GitHub integration  | External event and credential behavior                                | Controlled draft PRs/dispatches             | App events trigger checks, rules block bypass, OIDC works   |
-| Release acceptance  | Public artifacts                                                      | npm and GitHub                              | provenance, version/tag/release/changelog/sync              |
+| Layer              | Responsibility                                                        | Location                             | Required Cases                                              |
+| ------------------ | --------------------------------------------------------------------- | ------------------------------------ | ----------------------------------------------------------- |
+| Unit               | Peer parsing and update transformations                               | `test/tooling/react-support.test.ts` | RCT-001 through RCT-003 plus malformed/read-write integrity |
+| Workflow review    | Trigger, permission, major action tag, aggregate, collision semantics | `.github/workflows/*.yml`            | VER, REL, DEP, PR cases                                     |
+| GitHub integration | External event and credential behavior                                | Controlled draft PRs/dispatches      | App events trigger checks, rules block bypass, OIDC works   |
+| Release acceptance | Public artifacts                                                      | npm and GitHub                       | provenance, version/tag/release/changelog/sync              |
 
 ### Failed-Operation Integrity
 
 - Unit tests snapshot the filesystem fixture before malformed update cases and assert byte-for-byte equality afterward.
 - Verification failure is tested on a draft implementation PR before ruleset enforcement; release must remain skipped.
 - Collision tests create or mock an unexpected branch SHA and prove no force push/deletion occurs.
-- A failed package validation must not leave tracked changes; staging output is cleaned.
 
 ## Validation Protocol
 
@@ -637,13 +625,6 @@ Automatic repair commands, only when authorized:
 ```powershell
 pnpm run lint:fix
 pnpm run format
-```
-
-Phase 2 adds these repository commands before they are used as gates:
-
-```powershell
-pnpm run package:validate
-pnpm run package:pack
 ```
 
 Validation rules:
@@ -739,7 +720,7 @@ Record non-secret evidence in the Phase 5 closeout:
 
 ## Implementation Strategy
 
-Five phases isolate unprivileged correctness, package validation, privileged release changes, dependency policy, and external enforcement. This allows repository logic to be validated before credentials or branch rules can block normal development, while keeping each security boundary separately reviewable.
+Five phases isolate unprivileged correctness, supply-chain auditing, privileged release changes, dependency policy, and external enforcement. This allows repository logic to be validated before credentials or branch rules can block normal development, while keeping each security boundary separately reviewable.
 
 ## Phase 1: Canonical Verification and React Compatibility
 
@@ -813,7 +794,7 @@ Cover RCT-001 through RCT-003, malformed bounds, non-contiguous/unsupported synt
 
 #### 1.3 Create reusable verification
 
-Add `workflow_call`, read-only permissions, matrix preparation from package metadata, quality job, Node/React compatibility job, and `Verification` aggregate. At this phase, package validation may contain only existing build/typecheck/test behavior; Phase 2 extends it.
+Add `workflow_call`, read-only permissions, matrix preparation from package metadata, quality job, Node/React compatibility job, and `Verification` aggregate.
 
 Compatibility install must explicitly target the workspace root and avoid committing changes. Keep `fail-fast: false` and verify all combinations. Use maintained major-version action tags.
 
@@ -883,45 +864,41 @@ Then open or update a draft PR and confirm every matrix cell and aggregate behav
 - Unresolved issues: GitHub-hosted matrix cells, aggregate failure/cancellation behavior, and React watcher dry dispatch require confirmation on the draft PR; local validation cannot execute GitHub's hosted job graph. Existing Vitest shutdown timeout warning remains after all 263 tests pass and is outside this phase's scope.
 - Next action: STOP. Await explicit Phase 1 acceptance and Phase 2 authorization.
 
-## Phase 2: Package and Supply-Chain Validation
+## Phase 2: Supply-Chain Validation and Action Normalization
 
 ### Goal
 
-Validate dependency authenticity/advisories and the actual package artifact before release.
+Validate dependency authenticity/advisories and normalize GitHub Action references before release.
 
 ### Status and Gate
 
-- Status: NOT STARTED
+- Status: IN PROGRESS
 - Start requires: Phase 1 accepted and `Authorize Phase 2.`
 - Exit requires: all Phase 2 criteria and explicit user acceptance
 - Mandatory stop: request manual prerequisites and Phase 3 authorization
 
 ### Requirements Addressed
 
-SR-006, TR-002, TR-003, AR-006, DEC-008
+SR-006, TR-002, AR-006, DEC-008
 
 ### Dependencies and Prerequisites
 
 - Phase 1 accepted.
 - Explicit permission before adding development dependencies or updating the lockfile.
-- Confirm selected package analysis tools support Node 20/22/24 and dual ESM/CJS output.
 
 ### Phase Task Backlog
 
-| Task ID | Task                                                        | Requirements   | Detailed Step | Dependencies              | Deliverable                            | Verification            | Status      |
-| ------- | ----------------------------------------------------------- | -------------- | ------------- | ------------------------- | -------------------------------------- | ----------------------- | ----------- |
-| P2-T001 | Add package metadata and artifact validator                 | TR-002, TR-003 | 2.1           | Phase 1                   | Validation scripts and package scripts | Focused tests/scripts   | NOT STARTED |
-| P2-T002 | Add package smoke tests                                     | TR-003         | 2.2           | P2-T001                   | ESM/CJS/types tarball consumers        | `pnpm run package:pack` | NOT STARTED |
-| P2-T003 | Add distinct vulnerability/signature audits                 | SR-006         | 2.3           | None                      | Accurately named workflow steps        | Reusable workflow run   | NOT STARTED |
-| P2-T004 | Integrate package gates and normalize remaining action tags | TR-002, AR-006 | 2.4           | P2-T001, P2-T002, P2-T003 | Updated `verify.yml`                   | Full verification run   | NOT STARTED |
+| Task ID | Task                                                      | Requirements   | Detailed Step | Dependencies | Deliverable                     | Verification          | Status      |
+| ------- | --------------------------------------------------------- | -------------- | ------------- | ------------ | ------------------------------- | --------------------- | ----------- |
+| P2-T001 | Add package analyzers and packed-artifact validator       | TR-002, TR-003 | 2.1           | Phase 1      | Removed by revision 11          | User direction        | REMOVED     |
+| P2-T002 | Add package smoke tests                                   | TR-003         | 2.2           | P2-T001      | Removed by revision 11          | User direction        | REMOVED     |
+| P2-T003 | Add distinct vulnerability/signature audits               | SR-006         | 2.3           | None         | Accurately named workflow steps | Reusable workflow run | NOT STARTED |
+| P2-T004 | Integrate audit gates and normalize remaining action tags | TR-002, AR-006 | 2.4           | P2-T003      | Updated `verify.yml`            | Full verification run | NOT STARTED |
 
 ### File Allowlist
 
 - `package.json`
 - `pnpm-lock.yaml`
-- `scripts/validate-package.mjs` (new)
-- `test/tooling/package-validation.test.ts` (new)
-- `.gitignore` only for repository-local package staging output
 - `.github/workflows/verify.yml`
 - Other existing workflow files only for normalizing action references to major-version tags
 - This planning document
@@ -935,13 +912,9 @@ SR-006, TR-002, TR-003, AR-006, DEC-008
 
 ### Detailed Steps
 
-#### 2.1 Add package validation
+#### 2.1 Package validation removed
 
-Add repository scripts `package:validate` and `package:pack`. Validate name, version shape, license, repository/homepage/bugs, engines, files, side effects, matching React peers, and ESM/CJS/types exports. Use established package analyzers rather than duplicating their resolution algorithms.
-
-#### 2.2 Validate packed consumers
-
-Build first, create a tarball in an ignored repository-local staging directory, inspect included files, install/reference it in minimal isolated fixtures without writing user caches beyond the active toolchain's normal behavior, and prove ESM import, CommonJS require, and TypeScript declaration resolution. The script must clean on success/failure.
+P2-T001 and P2-T002 were removed by revision 11. Do not add package validation scripts, analyzer dependencies, packed-consumer wrappers, or calling package scripts. `package.json` is the source of truth.
 
 #### 2.3 Split audits
 
@@ -949,22 +922,19 @@ Run `pnpm audit` as vulnerability advisory audit and `npm audit signatures` as s
 
 #### 2.4 Integrate gates
 
-Extend verification quality/package jobs and normalize every third-party action in all workflow files to a maintained major-version tag from its established publisher.
+Extend verification quality checks with both audits and normalize every third-party action in all workflow files to a maintained major-version tag from its established publisher.
 
 ### Public API and Contract Impact
 
 - No runtime API change.
-- Package scripts become developer-facing validation commands.
 
 ### Migration and Rollback
 
-- Remove newly added scripts/dependencies and reusable workflow steps together if analyzers are incompatible.
+- Remove audit workflow steps together if the controls are incompatible and revise the plan rather than weakening their labels or behavior.
 
 ### Phase Validation
 
 ```powershell
-pnpm run package:validate
-pnpm run package:pack
 pnpm run build
 pnpm run typecheck
 pnpm test
@@ -977,8 +947,6 @@ Also validate both audit steps in GitHub's clean runner environment.
 ### Phase Acceptance Criteria
 
 - Both audit controls run and are accurately named.
-- Package validation catches broken exports/files/peer mismatches in focused negative tests.
-- The packed artifact passes ESM, CJS, and type resolution.
 - All actions use reviewed major-version tags and are covered by the grouped GitHub Actions Dependabot policy.
 - Full reusable verification passes.
 
@@ -1081,8 +1049,6 @@ pnpm run typecheck
 pnpm test
 pnpm run lint
 pnpm run format:check
-pnpm run package:validate
-pnpm run package:pack
 ```
 
 External checks:
@@ -1264,7 +1230,7 @@ SR-008, OR-002, PR-003, FR-006, all acceptance criteria
 
 #### 5.1 Document operations
 
-Document workflow topology, required checks, React source of truth, audits, package validation, release classification, environment/App/Trusted Publisher prerequisites, dependency promotion, hotfixes, back-merge, partial failure recovery, patch rollback, npm deprecation, App key rotation, and external-setting verification.
+Document workflow topology, required checks, React source of truth, audits, release classification, environment/App/Trusted Publisher prerequisites, dependency promotion, hotfixes, back-merge, partial failure recovery, patch rollback, npm deprecation, App key rotation, and external-setting verification.
 
 #### 5.2 Align contributor guidance
 
@@ -1297,11 +1263,9 @@ pnpm run typecheck
 pnpm test
 pnpm run lint
 pnpm run format:check
-pnpm run package:validate
-pnpm run package:pack
 ```
 
-GitHub/npm validation follows AC-001 through AC-008 and M-005.
+GitHub/npm validation follows active AC-001 through AC-007 and M-005.
 
 ### Phase Acceptance Criteria
 
@@ -1394,7 +1358,7 @@ Stop and revise this plan when:
 The initiative is complete only when:
 
 1. Every phase is explicitly accepted.
-2. All active requirements and AC-001 through AC-008 are satisfied.
+2. All active requirements and active AC-001 through AC-007 are satisfied.
 3. All semantic cases pass in their required test/integration layer.
 4. Full repository and GitHub quality gates pass.
 5. App, environment, Trusted Publisher, and ruleset evidence is recorded without secrets.
@@ -1423,10 +1387,10 @@ The initiative is complete only when:
 ## Handoff to Implementing Agent
 
 - Canonical plan: `docs/development/flow-stack-ci-modernization-plan.md`
-- Authorized phase: Phase 1 implementation complete; no further phase authorized
-- Plan version/revision: 3.0/8
+- Authorized phase: Phase 2
+- Plan version/revision: 5.0/11
 - Baseline commit: `525e8d7817b205d39b33f37b938655a1a8cad775`
 - Mandatory first action: Read the canonical plan in full.
-- Active phase backlog: None; Phase 1 is awaiting acceptance.
-- Stop condition: Request Phase 1 acceptance and explicit Phase 2 authorization.
+- Active phase backlog: P2-T003, P2-T004; P2-T001 and P2-T002 were removed by revision 11
+- Stop condition: Complete Phase 2 closeout, then request acceptance, manual prerequisites, and explicit Phase 3 authorization.
 - Prohibited action: Do not plan or begin the next phase without rereading this plan and receiving authorization.
