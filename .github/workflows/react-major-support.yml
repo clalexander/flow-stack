@@ -33,7 +33,7 @@ jobs:
 
       - name: Update React compatibility files
         id: update
-        run: node .github/scripts/update-react-major-support.mjs
+        run: node .github/scripts/update-react-major-support.ts
 
       - name: Stop if no newer React major exists
         if: ${{ steps.update.outputs.changed != 'true' }}
@@ -54,7 +54,7 @@ jobs:
           set -euo pipefail
 
           git checkout -B "$BRANCH"
-          git add package.json README.md .github/workflows/ci.yml .github/workflows/release.yml
+          git add package.json README.md
 
           if git diff --cached --quiet; then
             echo "No changes to commit."
@@ -91,6 +91,6 @@ jobs:
             --base dev \
             --head "$BRANCH" \
             --title "feat(react): add React ${CANDIDATE_REACT_MAJOR} compatibility candidate" \
-            --body "React ${LATEST_REACT_VERSION} is available on npm. This PR updates Flow Stack's peer dependency range and compatibility matrix to evaluate React ${CANDIDATE_REACT_MAJOR} support.
+            --body "React ${LATEST_REACT_VERSION} is available on npm. This PR updates Flow Stack's peer dependency range and compatibility documentation to evaluate React ${CANDIDATE_REACT_MAJOR} support.
 
           Merge this only after the compatibility matrix passes and the public API/runtime behavior is verified."

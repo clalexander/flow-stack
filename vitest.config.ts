@@ -10,7 +10,11 @@ export default defineConfig({
         test: {
           name: 'unit-and-integration',
           environment: 'node',
-          include: ['test/unit/**/*.test.ts', 'test/integration/**/*.test.ts'],
+          include: [
+            'test/unit/**/*.test.ts',
+            'test/integration/**/*.test.ts',
+            'test/tooling/**/*.test.ts',
+          ],
         },
       },
       {

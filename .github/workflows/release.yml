@@ -14,66 +14,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  compatibility:
-    name: Compatibility (React ${{ matrix.react }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    strategy:
-      fail-fast: false
-      matrix:
-        react:
-          - '18'
-          - '19'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Verify dependency signatures
-        run: pnpm audit
-
-      - name: Install React compatibility version
-        run: >
-          pnpm add -D --save-exact
-          react@${{ matrix.react }}
-          react-dom@${{ matrix.react }}
-          @types/react@${{ matrix.react }}
-          @types/react-dom@${{ matrix.react }}
-
-      - name: Check formatting
-        run: pnpm run format:check
-
-      - name: Lint
-        run: pnpm run lint
-
-      - name: Typecheck
-        run: pnpm run typecheck
-
-      - name: Test
-        run: pnpm test
-
-      - name: Build
-        run: pnpm run build
+  verify:
+    name: Verify
+    uses: ./.github/workflows/verify.yml
 
   release:
     name: Release
-    needs: compatibility
+    needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
