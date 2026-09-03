@@ -1,3 +1,15 @@
+# [1.0.0](https://github.com/clalexander/flow-stack/compare/v0.2.3...v1.0.0) (2026-09-03)
+
+
+* build!: remove cjs support ([#44](https://github.com/clalexander/flow-stack/issues/44)) ([5fc7f5c](https://github.com/clalexander/flow-stack/commit/5fc7f5c474526b469c6a53cfb05d0657322c7e67))
+* feat!: require Node 22.12 or newer ([#43](https://github.com/clalexander/flow-stack/issues/43)) ([419150e](https://github.com/clalexander/flow-stack/commit/419150e6c173d2fd433338821337baabe8042342))
+
+
+### BREAKING CHANGES
+
+* Remove CommonJS support
+* Node 20 is no longer supported
+
 ## [0.2.3](https://github.com/clalexander/flow-stack/compare/v0.2.2...v0.2.3) (2026-06-23)
 
 
