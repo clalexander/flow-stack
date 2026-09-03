@@ -7,9 +7,18 @@ overrides:
   nanoid: 3.3.18
   postcss: 8.5.23
   undici: 7.29.0
-
+updateConfig:
+  ignoreDependencies:
+    # Remove once eslint-plugin-react and eslint-plugin-jsx-a11y support ESLint 10.
+    - '@eslint/js'
+    - eslint
+    # Remove once typescript-eslint supports TypeScript 7.
+    - typescript
+    # React majors are owned by the React compatibility watcher.
+    - react
+    - react-dom
+    - '@types/react'
+    - '@types/react-dom'
 allowBuilds:
   esbuild: true
   unrs-resolver: false
-minimumReleaseAgeExclude:
-  - esbuild@0.28.1
