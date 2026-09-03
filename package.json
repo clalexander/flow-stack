@@ -53,7 +53,7 @@
   "scripts": {
     "build": "tsdown",
     "clean": "rimraf dist",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",

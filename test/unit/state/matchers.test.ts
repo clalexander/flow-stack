@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
+import type { NavigationEntry } from '../../../src/core/public';
 import {
   matchesNavigationEntry,
   findNavigationEntry,
@@ -7,7 +8,7 @@ import {
 import { makeEntry } from '../../fixtures/entries';
 
 describe('matchesNavigationEntry', () => {
-  const entries = [
+  const entries: [NavigationEntry, NavigationEntry] = [
     makeEntry({ routeName: 'Home', key: 'key-home' }),
     makeEntry({ routeName: 'Detail', key: 'key-detail', id: 'detail-1' }),
   ];
