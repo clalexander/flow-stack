@@ -1,0 +1,171 @@
+name: Verify
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    name: Prepare compatibility matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      react: ${{ steps.react.outputs.matrix }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Prepare React matrix
+        id: react
+        run: |
+          matrix="$(node --input-type=module -e "
+            import { readFileSync } from 'node:fs';
+            import { getSupportedReactMajors } from './.github/scripts/react-support.ts';
+
+            const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
+            const majors = getSupportedReactMajors(
+              packageJson.peerDependencies.react,
+              packageJson.peerDependencies['react-dom'],
+            );
+
+            process.stdout.write(JSON.stringify(majors));
+          ")"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit dependency vulnerabilities
+        run: pnpm audit
+
+      - name: Verify dependency signatures
+        run: npm audit signatures
+
+      - name: Check formatting
+        run: pnpm run format:check
+
+      - name: Lint
+        run: pnpm run lint
+
+  compatibility:
+    name: Compatibility (Node ${{ matrix.node }}, React ${{ matrix.react }})
+    needs:
+      - prepare
+      - quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - '20'
+          - '22'
+          - '24'
+        react: ${{ fromJSON(needs.prepare.outputs.react) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install React compatibility version
+        run: >
+          pnpm add --workspace-root -D --save-exact
+          react@${{ matrix.react }}
+          react-dom@${{ matrix.react }}
+          @types/react@${{ matrix.react }}
+          @types/react-dom@${{ matrix.react }}
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Test
+        run: pnpm test
+
+      - name: Verify compatibility changes are ephemeral
+        if: ${{ always() }}
+        run: |
+          unexpected="$(git diff --name-only -- . ':(exclude)package.json' ':(exclude)pnpm-lock.yaml')"
+          if [[ -n "$unexpected" ]]; then
+            echo "Compatibility checks changed unexpected files:" >&2
+            echo "$unexpected" >&2
+            exit 1
+          fi
+
+  verification:
+    name: Verification
+    if: ${{ always() }}
+    needs:
+      - prepare
+      - quality
+      - compatibility
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Require successful verification jobs
+        env:
+          PREPARE_RESULT: ${{ needs.prepare.result }}
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
+        run: |
+          failed=0
+          for result in \
+            "prepare=$PREPARE_RESULT" \
+            "quality=$QUALITY_RESULT" \
+            "compatibility=$COMPATIBILITY_RESULT"; do
+            if [[ "${result#*=}" != "success" ]]; then
+              echo "Required job did not succeed: $result" >&2
+              failed=1
+            fi
+          done
+          exit "$failed"
