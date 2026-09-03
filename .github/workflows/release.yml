@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Evaluate the next release without publishing or repository mutation
+        required: true
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -20,14 +26,16 @@ jobs:
 
   release:
     name: Release
+    if: >-
+      ${{ github.event_name == 'push' ||
+      (!inputs.dry-run && github.ref == 'refs/heads/main') }}
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    environment: npm
 
     permissions:
-      contents: write
-      issues: write
-      pull-requests: write
+      contents: read
       id-token: write
 
     steps:
@@ -35,6 +43,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Enable Corepack
         run: corepack enable
@@ -49,25 +58,83 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify dependency signatures
-        run: pnpm audit
-
       - name: Build
         run: pnpm run build
 
-      - name: Configure Git User
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Create release automation token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RELEASE_AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.RELEASE_AUTOMATION_PRIVATE_KEY }}
+          permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
 
       - name: Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_AUTHOR_NAME: github-actions[bot]
-          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-          GIT_COMMITTER_NAME: github-actions[bot]
-          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
-        run: pnpm exec semantic-release
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          GIT_AUTHOR_NAME: ${{ steps.app-token.outputs.app-slug }}[bot]
+          GIT_AUTHOR_EMAIL: ${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: ${{ steps.app-token.outputs.app-slug }}[bot]
+          GIT_COMMITTER_EMAIL: ${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com
+        run: |
+          set -euo pipefail
+
+          git_auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w 0)"
+          echo "::add-mask::$git_auth"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $git_auth"
+
+          pnpm exec semantic-release
+
+  release-dry-run:
+    name: Release dry run
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' &&
+      inputs.dry-run && github.ref == 'refs/heads/main' }}
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Evaluate release without mutation
+        env:
+          RELEASE_ANALYSIS_ONLY: 'true'
+        run: |
+          set -euo pipefail
+
+          dry_run_remote="$RUNNER_TEMP/flow-stack-release-dry-run.git"
+          git clone --bare . "$dry_run_remote"
+
+          pnpm exec semantic-release \
+            --dry-run \
+            --no-ci \
+            --repository-url "file://$dry_run_remote"
 
   sync-main-into-dev:
     name: Open sync PR to dev
@@ -77,31 +144,49 @@ jobs:
     timeout-minutes: 10
 
     permissions:
-      pull-requests: write
+      contents: read
 
     steps:
+      - name: Create release automation token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RELEASE_AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.RELEASE_AUTOMATION_PRIVATE_KEY }}
+          permission-contents: read
+          permission-pull-requests: write
+
       - name: Open back-merge PR
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
 
-          if gh pr list \
-            --repo "$REPO" \
-            --base dev \
-            --head main \
-            --state open \
-            --json number \
-            --jq 'length > 0' | grep -q true; then
-            echo "A sync PR from main to dev already exists."
+          owner="${REPO%%/*}"
+          main_sha="$(gh api "repos/$REPO/git/ref/heads/main" --jq '.object.sha')"
+          ahead_by="$(gh api "repos/$REPO/compare/dev...main" --jq '.ahead_by')"
+          if [[ "$ahead_by" -eq 0 ]]; then
+            echo "No commits need to be synchronized from main at $main_sha into dev."
             exit 0
           fi
 
-          gh pr create \
+          matching_prs="$(gh pr list \
+            --repo "$REPO" \
+            --base dev \
+            --head "$owner:main" \
+            --state open \
+            --json headRefOid,headRepository,number \
+            --jq "[.[] | select(.headRepository.nameWithOwner == \"$REPO\" and .headRefOid == \"$main_sha\")]")"
+          if [[ "$(jq 'length' <<<"$matching_prs")" -gt 0 ]]; then
+            echo "A sync PR from main at $main_sha to dev already exists."
+            exit 0
+          fi
+
+          pr_url="$(gh pr create \
             --repo "$REPO" \
             --base dev \
             --head main \
             --title "chore: sync main into dev" \
-            --body "Automated post-release sync PR from \`main\` into \`dev\`." \
-            || echo "No sync PR created. This usually means there are no changes to merge."
+            --body "Automated post-release sync PR from \`main\` at \`$main_sha\` into \`dev\`.")"
+          echo "Created sync PR $pr_url from main at $main_sha to dev."
