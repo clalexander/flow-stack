@@ -1,0 +1,1285 @@
+# Release Governance and Pull Request Preview Architecture and Implementation Plan
+
+> Status: READY FOR REVIEW
+>
+> Plan version: 2.1
+>
+> Revision: 4
+>
+> Last updated: 2026-09-03
+>
+> Repository/workspace: `clalexander/flow-stack`
+>
+> Branch: `dev`
+>
+> Baseline commit: `3a358899e1b98badd3ce7f9e06fc109bae5d2887`
+>
+> Working tree: Clean at planning baseline
+>
+> Canonical location: `docs/development/release-governance-plan.md`
+>
+> Current phase: Planning
+>
+> Implementation authorization: Not granted
+>
+> Supersedes: None
+
+## Purpose
+
+This plan governs four related corrections to Flow Stack's release automation:
+
+1. prevent a breaking commit from advancing a `0.x` release line to `1.0.0` while preserving conventional major releases after `1.0.0`;
+2. make the post-release `main`-to-`dev` pull request idempotent across the release commit's second workflow run;
+3. stop the Release Automation App from commenting on every pull request or issue included in a release; and
+4. publish a trustworthy semantic-release preview as a sticky comment on pull requests targeting `main`.
+
+The already-published `v1.0.0` remains published and remains the npm `latest` version. This initiative does not attempt to reconstruct a `0.x` latest line. The new policy has no effect on this package while its committed version is `1.x` or later; it is implemented so the repository carries the intended pre-1.0 behavior if reused or returned to a legitimate `0.x` release line. Had it existed at `v0.2.3`, the breaking commits would have produced `v0.3.0` instead of `v1.0.0`.
+
+> This is a planning document. It does not authorize implementation.
+
+## Intent and Goals
+
+### Intent
+
+Apply the conventional pre-1.0 interpretation in which breaking changes advance the minor version while major is `0`, then preserve normal Conventional Commit behavior from major `1` onward. Make release effects visible before merge, remove noisy release comments, and repair the observed back-merge failure without weakening verification or repository protections.
+
+### Goals
+
+1. Breaking commits release as the next minor version only while the current released major is `0`.
+2. At major version `1` or later, Conventional Commit breaking changes retain semantic-release's normal major behavior.
+3. The generated release commit cannot attempt a second back-merge.
+4. An existing open `main`-to-`dev` pull request is always a successful synchronization no-op.
+5. GitHub Releases remain enabled while semantic-release success comments on associated pull requests and issues are disabled.
+6. Every pull request targeting `main` receives one updated release-preview comment derived from the prospective squash commit.
+7. Privileged preview automation never checks out or executes pull request code.
+8. Release and CI documentation accurately describe the resulting behavior.
+
+### Success Outcomes
+
+- A breaking commit after `v0.2.3` predicts `v0.3.0`.
+- A breaking commit after `v1.0.0` predicts `v2.0.0` through normal semantic-release behavior.
+- No workflow input, force-major plugin, or alternate release command is added.
+- The workflow run caused by `chore(release): <version>` does not run `Open back-merge PR`.
+- If any open same-repository PR has head `main` and base `dev`, synchronization exits zero and reports that PR.
+- A real release creates the GitHub Release but does not add per-associated-PR or per-associated-issue success comments.
+- A PR to `main` has exactly one bot-authored preview comment. Every `synchronize` event for a new PR head SHA recomputes and updates that same comment; title and body edits also update it.
+- A preview is produced from trusted base-branch tooling and untrusted PR metadata only.
+
+## Scope
+
+### In Scope
+
+- semantic-release commit classification based on the committed package major version;
+- `@semantic-release/github` success-comment behavior;
+- release-commit-triggered back-merge behavior;
+- open back-merge PR detection;
+- a release-preview workflow for PRs targeting `main`;
+- release-policy and preview tooling with focused tests;
+- release and CI runbook updates;
+- controlled local and GitHub-hosted validation.
+
+### Out of Scope
+
+- unpublishing `v1.0.0`;
+- moving npm `latest` back to a `0.x` version;
+- deleting or rewriting the `v1.0.0` tag or GitHub Release;
+- creating a parallel `0.x` maintenance or npm distribution-tag channel;
+- changing which non-breaking Conventional Commit types release;
+- adding a `force-major-release`, `allow-major-release`, or equivalent workflow escape hatch;
+- replacing semantic-release;
+- changing the existing OIDC npm publication model, protected `npm` environment, or GitHub App credentials;
+- suppressing GitHub account-level watch, release, mention, security, or Actions notifications;
+- posting release previews to PRs that target `dev`, `release/**`, or `hotfix/**`;
+- product source or public package API changes;
+- unrelated workflow, dependency, or documentation cleanup.
+
+### Deferred Possibilities
+
+- A separately maintained `0.x` release line with a non-`latest` npm distribution tag.
+- Release-preview checks on all CI pull requests. This may be revisited if cumulative previews on `dev` prove useful.
+- Skipping the entire verification/release workflow for generated release commits. This plan skips only duplicate synchronization and preserves the documented second verification/no-op release run.
+
+## Non-Negotiable Execution Protocol
+
+1. Implementation proceeds through strictly sequential phases unless this plan explicitly identifies a safe parallel task.
+2. Only one phase may be active at a time.
+3. Starting Phase 1 requires explicit user authorization.
+4. Completing a phase does not authorize the next phase.
+5. After each phase, implementation stops and presents a closeout containing changed files, public API changes, tests, commands, evidence, deviations, and unresolved issues.
+6. The next phase begins only after explicit user acceptance of the prior phase and authorization of the next.
+7. Work outside the active phase allowlist is prohibited unless this plan is revised and the deviation is approved.
+8. Unexpected unrelated defects are documented, not repaired.
+9. The implementing agent must reread this entire document before planning the next implementation phase, before starting each phase, and after context compaction, session handoff, or resumed work.
+10. This plan is updated at every phase boundary with authorization, backlog status, validation evidence, deviations, and acceptance.
+11. Only tasks present in the authorized phase backlog may be executed. Newly discovered tasks must be added through a plan revision before execution.
+12. An implementation, design, behavior, or intent change outside approved scope must not be executed or silently incorporated. Stop, document the proposal, ask the user for direction, and wait for explicit direction.
+13. This plan remains the canonical initiative source of truth until explicitly superseded, promoted, archived, or removed.
+14. Ambiguous approval language must not be treated as authorization to cross a phase boundary.
+15. Branch changes and pull-request creation described in this plan are phase work and require the corresponding phase authorization.
+
+Unambiguous authorization examples:
+
+- `Authorize Phase 1.`
+- `Phase 1 is accepted. Authorize Phase 2.`
+
+## Document Maintenance Protocol
+
+- Increment `Revision` on every saved planning update, checkpoint, phase closeout, authorization, and acceptance.
+- Increment the minor plan version for additive detail that preserves approved architecture and phase structure.
+- Increment the major plan version when approved scope, architecture, canonical semantics, or phase structure changes materially.
+- Preserve stable requirement, decision, semantic case, pattern, acceptance, and task IDs.
+- Mark removed requirements or tasks `SUPERSEDED`, `OUT OF SCOPE`, or `REMOVED` with a reason; never silently delete history.
+- Update metadata, revision log, phase status, backlog status, validation evidence, deviations, and acceptance together at each phase boundary.
+- Use only `DRAFT`, `BLOCKED`, `READY FOR REVIEW`, `APPROVED`, `IN PROGRESS`, `AWAITING ACCEPTANCE`, `COMPLETE`, and `SUPERSEDED` for document status.
+
+## Planning Baseline
+
+| Field | Value | Evidence |
+| --- | --- | --- |
+| Repository root | Local checkout of `clalexander/flow-stack` | Workspace inspection |
+| Branch | `dev` | `git branch --show-current` |
+| Baseline commit | `3a358899e1b98badd3ce7f9e06fc109bae5d2887` | `git rev-parse HEAD` |
+| Working tree | Clean | `git status --short` returned no entries |
+| Current production tag | `v1.0.0` at `c36029502d39e99ad7aaed267855438e7b20b038` | `git show v1.0.0` |
+| Previous production tag | `v0.2.3` | `git describe --tags --abbrev=0 v1.0.0^` |
+| Release actor | `personal-release-automation[bot]` | `v1.0.0` author and committer metadata |
+| Relevant components | semantic-release, release workflow, CI workflows, GitHub App, npm publication, release docs | Repository inspection |
+| Related completed plan | `docs/plans/flow-stack-ci-modernization-plan.md`, version 5.2 revision 23 | Documentation inspection |
+| Toolchain | Node `>=22.12.0`; CI Node 22/24; pnpm 12.3.1; semantic-release 25.0.9 | `package.json`, `verify.yml` |
+
+The baseline includes the merged back-sync PR #48. The plan file itself becomes the only working-tree change produced during planning.
+
+## Revision Log
+
+| Revision | Plan Version | Date | Status | Summary | Author/Source |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1.0 | 2026-09-03 | READY FOR REVIEW | Initial release-governance, back-merge, notification, preview, branch, and phased implementation plan. | Initiative Architect |
+| 2 | 1.0 | 2026-09-03 | READY FOR REVIEW | Corrected the explicit-major contract so a manual force-major plugin can promote the current line after breaking commits have already shipped as minors; aligned inputs, semantics, tests, and phase steps. | Initiative Architect self-review |
+| 3 | 2.0 | 2026-09-03 | READY FOR REVIEW | Replaced the general major gate and force-major mechanism with the requested pre-1.0-only rule: breaking changes map to minor at `0.x` and retain conventional major behavior at `1.x` and later. | User correction |
+| 4 | 2.1 | 2026-09-03 | READY FOR REVIEW | Required the sticky dry-run comment to recompute and update for every PR head synchronization event; completed stale force-major cleanup and aligned preview semantics. | User clarification and plan consistency review |
+
+## Branch and Integration Strategy
+
+| Phase | Working Branch | Base | Integration Target | Rule |
+| --- | --- | --- | --- | --- |
+| 1 | `feature/release-governance` | `dev` at the phase-authorized baseline | Remains unmerged | Create once at Phase 1 start. |
+| 2 | `feature/release-governance` | Accepted Phase 1 state | Remains unmerged | Continue on the same branch because release workflow, policy, and tests share contracts. |
+| 3 | `feature/release-governance` | Accepted Phase 2 state | Remains unmerged | Continue on the same branch because preview imports the Phase 1 policy and analysis contracts. |
+| 4 | `feature/release-governance` | Accepted Phase 3 state | PR to `dev` | Documentation and full local validation stay with the implementation; merge only after Phase 4 acceptance. |
+| 5 | `release/release-governance` | Accepted `dev` after Phase 4 merge | PR to `main` | Create a fresh promotion branch from `dev`; do not reuse or retarget the feature branch. |
+| 5 hosted preview proof | `test/release-preview-validation` | Updated `main` after promotion | Never merge | Use one harmless temporary diff, open a PR to `main`, validate comment create/update, then close PR and delete branch. |
+
+Phases 1 through 4 intentionally use one branch and one eventual PR to `dev`. Splitting their tightly coupled contracts across multiple branches would either duplicate work or require stacking PRs that cannot be validated independently. Production promotion is deliberately separate so the exact accepted `dev` snapshot is reviewable before it reaches `main`.
+
+The promotion PR title must be non-releasing, for example `ci: govern major releases and preview release impact`. Its body must not contain a `BREAKING CHANGE:` footer. Merging it to `main` activates the workflow changes but should make the release job a successful no-op.
+
+## Phase Status
+
+| Phase | Conceptual Boundary | Branch | Status | Backlog Progress | Authorization | Acceptance | Revision |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | Canonical release policy and contracts | `feature/release-governance` | NOT STARTED | 0 / 4 complete | Not received | Not received | 4 |
+| 2 | Release workflow, notifications, and back-merge | `feature/release-governance` | NOT STARTED | 0 / 4 active complete; 1 removed | Not received | Not received | 4 |
+| 3 | Secure PR release preview | `feature/release-governance` | NOT STARTED | 0 / 5 complete | Not received | Not received | 4 |
+| 4 | Documentation, local validation, and integration to `dev` | `feature/release-governance` | NOT STARTED | 0 / 3 complete | Not received | Not received | 4 |
+| 5 | Promotion to `main` and hosted proof | `release/release-governance` | NOT STARTED | 0 / 5 active complete; 1 removed | Not received | Not received | 4 |
+
+## Requirement Sources
+
+| Source ID | Source | Authority/Scope | Relevant Material |
+| --- | --- | --- | --- |
+| SRC-000 | Initiative execution protocol | Initiative process | Phase gates, backlog, branch, scope, revision, validation, and handoff control |
+| SRC-001 | User request and follow-up decisions | Initiative | Pre-1.0 breaking-change policy, normal post-1.0 SemVer, no force-major mechanism, back-merge diagnosis, bot notifications, main-target PR previews, retained `v1.0.0`, durable branch-aware plan |
+| SRC-002 | Repository development and architecture rules | Repository | Maintainability, reuse, explicit boundaries, no unrelated changes, full quality gates |
+| SRC-003 | Repository security and workflow rules | Workflows/scripts | Least privilege, no secrets in logs, untrusted input validation, OIDC, secure CI/CD |
+| SRC-004 | Environment safety constraints | Local environment | Existing toolchain only; no installs or writes outside workspace; no destructive commands |
+| SRC-005 | `release.config.mjs` and `release.yml` | Current implementation | Commit rules, plugins, release/dry-run jobs, App token, back-sync logic |
+| SRC-006 | `ci.yml`, `verify.yml`, and `pr-title.yml` | Current implementation | PR events, authoritative verification, conventional squash-title contract |
+| SRC-007 | `docs/development/release.md` and `ci.md` | Documented intent | Release path, no-op release commit, dry-run safety, back-sync and CI contracts |
+| SRC-008 | Git history from `v0.2.3` to `v1.0.0` | Observed behavior | `feat!` and `build!` commits, generated release commit, bot identity |
+| SRC-009 | Failed `Open back-merge PR` log supplied by user | Observed failure | PR #48 existed, but preflight missed it and `gh pr create` rejected duplicate head/base |
+| SRC-010 | Installed semantic-release version and dependency declarations | Runtime contract to verify | semantic-release 25.0.9 and bundled analyzer/GitHub plugins |
+
+## Active Requirements
+
+### Functional Requirements
+
+| ID | Requirement | Source | Verification | Status |
+| --- | --- | --- | --- | --- |
+| FR-001 | When the committed package version has major `0`, a breaking commit must produce the next minor release rather than `1.0.0`. | SRC-001 | Policy tests and local semantic-release dry run | ACTIVE |
+| FR-002 | When the committed package version has major `1` or later, breaking commits must retain semantic-release's conventional major-release behavior. | SRC-001 | Policy tests and local semantic-release dry run | ACTIVE |
+| FR-003 | No manual major-release workflow input, force-major plugin, or alternate release path may be added by this initiative. | SRC-001 | Config and workflow review | ACTIVE |
+| FR-004 | The generated `chore(release): <version>` push must not attempt another `main`-to-`dev` PR. | SRC-001, SRC-009 | Condition tests/review and hosted release evidence | ACTIVE |
+| FR-005 | Any open same-repository PR from `main` to `dev` must make synchronization a successful no-op regardless of its currently observed head SHA. | SRC-001, SRC-009 | Script tests/review and hosted PR evidence | ACTIVE |
+| FR-006 | semantic-release must continue creating GitHub Releases but must not post its default success comment to each associated PR or issue. | SRC-001 | Config assertion and next real release evidence | ACTIVE |
+| FR-007 | Every PR targeting `main` must receive a semantic-release preview comment. | SRC-001 | Controlled hosted PR | ACTIVE |
+| FR-008 | Preview comments must be updated in place after PR title/body edits and on every `synchronize` event that changes the PR head SHA. Each run updates the same comment and must not accumulate duplicates. | SRC-001 | Controlled hosted PR create/update evidence across sequential commits | ACTIVE |
+| FR-009 | A preview must report `no release` or the predicted release type, version, generated notes, analyzed base/head identifiers, and any active major-version cap. | SRC-001 | Formatter tests and hosted comment | ACTIVE |
+
+### Domain and Data Requirements
+
+| ID | Requirement | Source | Verification | Status |
+| --- | --- | --- | --- | --- |
+| DR-001 | The committed `package.json` version is the release-policy input. A valid major of `0` enables the pre-major override; a valid major of `1` or later does not. Invalid versions fail configuration before release analysis. | SRC-001, SRC-005 | Unit tests and config-load test | ACTIVE |
+| DR-002 | Release rules include `{ breaking: true, release: 'minor' }` only for major `0`; for major `1` or later, no custom breaking rule is present and semantic-release defaults remain authoritative. | SRC-001, SRC-005 | Unit and integration tests | ACTIVE |
+| DR-003 | Existing custom classifications remain unchanged: `chore(deps)` patch; `chore(deps-dev)`, `ci`, `test`, and `chore(release)` no release. | SRC-005 | Policy regression tests | ACTIVE |
+| DR-004 | A back-merge identity is repository + open state + head repository/ref `main` + base `dev`; head SHA is diagnostic, not identity. | SRC-009 | Query tests/review | ACTIVE |
+| DR-005 | A PR preview models the repository's squash-merge contract as one prospective commit whose subject is the PR title and whose body is the PR body. | SRC-006, SRC-007 | Commit-builder tests and hosted comparison | ACTIVE |
+| DR-006 | The preview includes all commits already on `main` since the last release tag plus the prospective squash commit; it must not independently analyze the PR's internal commit subjects. | SRC-007 | Temporary-repository tests | ACTIVE |
+| DR-007 | The sticky comment marker is stable and unique to this automation; marker discovery considers only comments authored by the workflow token's bot identity. | SRC-003 | Formatter/query tests and hosted proof | ACTIVE |
+
+### Architectural Requirements
+
+| ID | Requirement | Source | Verification | Status |
+| --- | --- | --- | --- | --- |
+| AR-001 | semantic-release remains the sole release analyzer and publisher; no second Conventional Commit classifier may drift from it. | SRC-002, SRC-005 | Dependency/control-flow review | ACTIVE |
+| AR-002 | Release rules are constructed by a pure reusable TypeScript policy helper from the committed package version, consumed by `release.config.mjs` and tests. | SRC-002 | Imports and unit tests | ACTIVE |
+| AR-003 | Preview analysis uses semantic-release programmatically in dry-run, no-CI, analysis-only mode against a workspace-local temporary repository. | SRC-001, SRC-004 | Integration tests and workflow logs | ACTIVE |
+| AR-004 | Preview workflow and tooling are separate from authoritative `Verification`; preview-comment failure does not rename or weaken the existing `Verification` branch-protection contract. | SRC-006 | Workflow graph review | ACTIVE |
+| AR-005 | The existing manual release dry run retains no npm environment, OIDC permission, App token, or mutating plugins. | SRC-003, SRC-007 | Workflow review and hosted dispatch | ACTIVE |
+| AR-006 | New tooling follows the existing `.github/scripts/*.ts` plus `test/tooling/*.test.ts` pattern and executes on the existing Node 24 toolchain. | SRC-002, SRC-006 | File placement and tests | ACTIVE |
+| AR-007 | Local temporary repositories live only under ignored `.tmp/release-governance/` inside the workspace and are removed after validation. | SRC-004 | `.gitignore`, test cleanup, clean status | ACTIVE |
+
+### Security and Operational Requirements
+
+| ID | Requirement | Source | Verification | Status |
+| --- | --- | --- | --- | --- |
+| SR-001 | The PR preview uses `pull_request_target` only with trusted base-branch workflow, config, scripts, and installed dependencies. It must never check out, import, build, or execute PR head content. | SRC-003 | Workflow source review and hosted logs | ACTIVE |
+| SR-002 | PR title and body are untrusted data and must enter Git only through an environment/file/stdin-safe boundary, never shell interpolation or `eval`. | SRC-003 | Tests and workflow review | ACTIVE |
+| SR-003 | Preview permissions are limited to `contents: read` and `pull-requests: write`; no App credentials, npm environment, OIDC, or repository contents write permission are available. | SRC-003 | Workflow permission review | ACTIVE |
+| SR-004 | Preview output must not contain tokens, environment dumps, authorization headers, or raw internal stack traces. | SRC-003 | Failure tests and hosted log review | ACTIVE |
+| SR-005 | Preview comments are bounded to GitHub's comment size with deterministic truncation that preserves marker, result summary, and provenance. | SRC-003 | Boundary tests | ACTIVE |
+| SR-006 | Back-merge and real release mutation continue using the existing short-lived least-privilege Release Automation App token. | SRC-003, SRC-005 | Workflow review | ACTIVE |
+| OR-001 | Per-PR concurrency cancels superseded preview runs so stale analyses cannot overwrite newer comments. Every completed synchronize run must record the event head SHA in the updated comment. | SRC-001 | Workflow concurrency and hosted sequential-commit test | ACTIVE |
+| OR-002 | Preview analysis or comment mutation failure fails visibly; it must not post a false `no release` result. | SRC-001 | Failure tests and hosted check | ACTIVE |
+| OR-003 | Existing GitHub watch/release/security/Actions notification preferences remain outside repository control and are not represented as suppressible by this change. | SRC-001 | Documentation review | ACTIVE |
+
+### Testing and Validation Requirements
+
+| ID | Requirement | Source | Verification | Status |
+| --- | --- | --- | --- | --- |
+| TR-001 | Focused tests cover `0.x`, `1.x`, later majors, invalid versions, existing release rules, no-release behavior, preview formatting, marker identity, truncation, and malformed results. | SRC-002 | Vitest results | ACTIVE |
+| TR-002 | Workspace-local temporary Git repositories prove analyzer behavior: breaking at `v0.2.3` yields `v0.3.0`, breaking at `v1.0.0` yields `v2.0.0`, and non-releasing input yields no release. | SRC-001, SRC-004 | Integration-test evidence | ACTIVE |
+| TR-003 | Failed analysis and failed comment update must be tested as failures, not converted to no-release success. | SRC-003 | Unit/integration tests | ACTIVE |
+| TR-004 | Each implementation phase runs focused validation; Phase 4 runs build, typecheck, tests, lint, format check, and diff check in repository gate order. | SRC-002 | Phase closeouts | ACTIVE |
+| TR-005 | GitHub event, permission, App, PR API, and comment-update behavior receive controlled hosted validation before initiative completion. | SRC-003 | Phase 5 evidence | ACTIVE |
+
+### Documentation and Process Requirements
+
+| ID | Requirement | Source | Verification | Status |
+| --- | --- | --- | --- | --- |
+| PR-001 | Implementation is limited to the authorized phase backlog and approved scope. Out-of-scope design or behavior changes require a plan revision and explicit user direction. | SRC-000 | Revision and closeout records | ACTIVE |
+| PR-002 | This entire plan must be reread before planning or starting each phase and after compaction, handoff, or resumed work. | SRC-000 | Phase checkpoints | ACTIVE |
+| PR-003 | Phases 1-4 use `feature/release-governance` from `dev`; Phase 5 uses a fresh `release/release-governance` from accepted `dev`. | SRC-001 | Git branch/PR evidence | ACTIVE |
+| PR-004 | Release and CI runbooks must document the major gate, promotion procedure, comment suppression, preview trust boundary, and back-merge idempotency. | SRC-001, SRC-007 | Documentation review | ACTIVE |
+| PR-005 | The plan is updated at every phase boundary and remains the canonical source of truth until completion or supersession. | SRC-000 | Revision log | ACTIVE |
+
+## Acceptance Criteria
+
+| ID | Acceptance Criterion | Requirements | Evidence |
+| --- | --- | --- | --- |
+| AC-001 | A breaking prospective commit at `v0.2.3` yields `v0.3.0`, while the same breaking commit shape at `v1.0.0` yields `v2.0.0`. | FR-001, FR-002, DR-001, DR-002 | Local temporary-repository semantic-release runs |
+| AC-002 | All pre-existing custom release classifications produce their documented results in both pre-major and stable-major policy modes. | DR-003 | Policy tests |
+| AC-003 | `release.yml` has no major-release input or alternate major path; normal and manual dry runs use the same version-conditional release configuration. | FR-003, AR-001 | Workflow and config review |
+| AC-004 | The release-commit-triggered run skips synchronization, while a normal/manual release run may synchronize. | FR-004 | Hosted run jobs and conditions |
+| AC-005 | Open PR #48's former state is represented by a test/query case that exits zero even when its head SHA differs from current `main`. | FR-005, DR-004 | Script test or controlled API evidence |
+| AC-006 | A release still creates npm/tag/GitHub Release artifacts and creates no semantic-release success comments on associated PRs/issues. | FR-006 | First real release inspection |
+| AC-007 | A PR to `main` gets one preview comment; pushing at least two sequential commits produces a recomputation for each resulting `synchronize` event, preserves the same comment ID, and records each latest head SHA. Title/body edits also update that comment. | FR-007, FR-008, OR-001 | Controlled hosted PR evidence |
+| AC-008 | Hosted logs prove preview checked out trusted base only, received no App/npm/OIDC capability, and treated PR metadata as data. | SR-001, SR-002, SR-003 | Workflow log and permission review |
+| AC-009 | The full repository quality gate passes and the working tree contains only approved changes. | TR-004 | Commands and `git status --short` |
+| AC-010 | Canonical docs and this plan match deployed behavior and contain final evidence. | PR-004, PR-005 | Documentation review and final revision |
+
+## Assumptions and Constraints
+
+### Assumptions
+
+| ID | Assumption | Basis | Risk if False | Resolution |
+| --- | --- | --- | --- | --- |
+| ASM-001 | Squash merge remains enabled, so PR title/body model the future commit. | Existing docs and PR-title workflow | Preview differs from merged history | Stop and revise preview semantics before implementation. |
+| ASM-002 | semantic-release 25's programmatic API returns `false` for no release and a structured result containing `nextRelease` for a release. | Declared dependency and established API | Preview helper cannot use planned contract | Verify in Phase 1; revise plan if contract differs. |
+| ASM-003 | `@semantic-release/github` accepts `successComment: false` while retaining GitHub Release publication. | Plugin's documented option, not locally verified during planning | Comments continue or plugin config fails | Verify installed/runtime contract in Phase 1 before wiring; stop if false. |
+| ASM-004 | A custom matching breaking rule takes precedence over the analyzer's default major rule when and only when the current major is `0`. | Analyzer release-rule semantics | `0.x` could still propose `1.0.0`, or post-1.0 behavior could be incorrectly capped | Mandatory temporary-repository proof before Phase 1 acceptance. |
+| ASM-005 | The workflow `GITHUB_TOKEN` can update PR comments for same-repository `pull_request_target` events under explicit permission. | GitHub Actions permission model | Preview cannot comment | Hosted proof in Phase 5; no App token fallback without plan revision. |
+
+### Constraints
+
+- `v1.0.0` and npm `latest` remain unchanged by user decision.
+- No dependency install or update is authorized; use the current lockfile and installed toolchain.
+- No local validation may write outside the active workspace.
+- GitHub-hosted behavior cannot be fully proven locally.
+- The preview workflow first becomes trusted base-branch code after promotion to `main`; it cannot comment on its own initial promotion PR.
+- The existing `Verification` job name remains a branch-protection contract.
+
+## Material Open Questions
+
+None. Foundational scope and policy questions were resolved by the user:
+
+- retain `v1.0.0` and npm `latest`;
+- apply the breaking-to-minor override only at major `0`, with no force-major mechanism;
+- preview only PRs targeting `main`;
+- repair the observed duplicate PR failure using its supplied log.
+
+Implementation must still verify ASM-002 through ASM-005. A failed assumption is a drift guard, not permission to invent a replacement architecture.
+
+## Terminology
+
+- **Pre-major mode**: release analysis when the committed package major is `0`; breaking changes map to minor.
+- **Stable mode**: release analysis when the committed package major is `1` or later; Conventional Commit breaking changes map to major normally.
+- **Breaking commit**: a Conventional Commit with `!` or a `BREAKING CHANGE:` footer as recognized by semantic-release.
+- **Prospective squash commit**: synthetic commit containing PR title as subject and PR body as body, parented to the PR base SHA.
+- **Analysis-only mode**: semantic-release with only commit analyzer and release-notes generator loaded.
+- **Sticky comment**: one marker-bearing PR comment that is updated rather than duplicated.
+- **Back-merge identity**: one open same-repository pull request from `main` to `dev`, independent of observed head SHA.
+- **Release commit run**: second `release.yml` push run caused by semantic-release's `chore(release): <version>` commit.
+
+## Current-State Observations
+
+1. `release.config.mjs` uses standard semantic-release breaking-change behavior and has no major-version gate.
+2. `v1.0.0` followed `v0.2.3`; the release range includes `feat!: require Node 22.12 or newer` and `build!: remove cjs support`.
+3. `v1.0.0` is the generated `chore(release): 1.0.0` commit authored and committed by `personal-release-automation[bot]`.
+4. `release.yml` triggers on every push to `main`, including the generated release commit.
+5. `sync-main-into-dev` currently runs after every successful `release` job when `github.ref` is `main`.
+6. Synchronization currently recognizes only an open PR whose `headRefOid` exactly equals the current `main` SHA.
+7. The observed second run reached `gh pr create`; GitHub rejected it because PR #48 already existed from `main` to `dev`.
+8. `concurrency: release-${{ github.ref }}` serializes main runs but does not deduplicate their later synchronization attempts.
+9. The manual dry-run job already uses analysis-only plugins, no npm environment, no OIDC, no App token, and a local bare remote.
+10. `ci.yml` verifies PRs to `main`, `dev`, `release/**`, and `hotfix/**`; release previews do not yet exist.
+11. `pr-title.yml` validates titles, matching the documented squash-title release model.
+12. Repository code contains no custom email sender. The relevant repository-controlled notification is the GitHub plugin's success comment; account-level emails are external settings.
+
+### Documentation or Contract Discrepancies
+
+| ID | Documentation Says | Code/Observed Behavior Says | Planned Resolution |
+| --- | --- | --- | --- |
+| DISC-001 | Back-merge is a no-op when an equivalent PR exists for the current main commit. | Exact-SHA filtering missed an already-open same-head/base PR and create failed. | Define equivalence by GitHub's open head/base invariant and report SHA only diagnostically. |
+| DISC-002 | A breaking footer always produces a major release. | This is correct for current `v1.x`, but it did not match the intended behavior while the package was `v0.x`. | Document and implement version-conditional pre-major classification. |
+| DISC-003 | The release commit intentionally triggers a second verification/no-op release. | That second run also attempted synchronization. | Preserve verification/no-op release; skip only synchronization for generated release commits. |
+
+## Current Architecture
+
+```mermaid
+flowchart LR
+  PR[PR to main] --> CI[CI Verification]
+  M[Push to main] --> RW[Release workflow]
+  RW --> V[Reusable verification]
+  V --> SR[semantic-release]
+  SR --> NPM[Public npm]
+  SR --> RC[Release commit and tag]
+  SR --> GR[GitHub Release and success comments]
+  RC --> RW2[Second push workflow]
+  RW --> SYNC[Open main to dev PR]
+  RW2 --> SYNC
+```
+
+Release and preview policy are currently implicit in semantic-release defaults. The release workflow owns both publication and synchronization. The exact-SHA PR check does not match GitHub's head/base uniqueness rule.
+
+## Target Architecture
+
+```mermaid
+flowchart LR
+  PP[PR metadata] --> PW[Trusted release-preview workflow]
+  PW --> SC[Prospective squash commit]
+  SC --> AP[Analysis-only semantic-release]
+  POL[Release policy helper] --> AP
+  AP --> CM[Sticky PR comment]
+
+  PUSH[Push to main] --> RW[Release workflow]
+  MAN[Manual dry run] --> RW
+  POL --> SR[semantic-release]
+  RW --> SR
+  SR --> NPM[npm and provenance]
+  SR --> GR[GitHub Release]
+  SR --> RC[Release commit]
+  RW --> SYNC[Idempotent main to dev sync]
+  RC --> RW2[Verification and no-op release]
+  RW2 -. release commit guard .-> SKIP[Skip sync]
+```
+
+### Responsibilities and Dependency Direction
+
+- `.github/scripts/release-policy.ts` owns only release-rule construction and strict committed-version parsing. It has no GitHub or filesystem dependency.
+- `release.config.mjs` consumes the policy helper and remains semantic-release's canonical plugin configuration.
+- `.github/scripts/release-preview.ts` owns prospective commit-message construction, semantic-release result narrowing, bounded Markdown rendering, and the CLI boundary needed by workflows.
+- `release-preview.yml` owns trusted checkout, dependency setup, temporary Git repository construction, GitHub comment query/upsert, permissions, and concurrency.
+- `release.yml` owns real/manual release capabilities and back-sync mutation.
+- GitHub remains source of truth for PR state; semantic-release remains source of truth for release classification and notes.
+- Preview is informational automation, not a replacement for `Verification` or protected environment approval.
+
+## Settled Design Decisions
+
+| ID | Decision | Rationale | Alternatives Rejected | Consequences | Revisit When |
+| --- | --- | --- | --- | --- | --- |
+| DEC-001 | Keep `v1.0.0` published and npm `latest`. | Explicit user decision; published version history should not be rewritten. | Unpublish/retag; parallel 0.x latest recovery. | The pre-major rule has no current effect because the package is already `1.x`. | A supported 0.x maintenance channel is requested. |
+| DEC-002 | Add the breaking-to-minor release rule only when the committed package major is `0`; omit it for major `1` and later. | Exactly matches the requested pre-1.0 SemVer interpretation while preserving conventional behavior afterward. | Permanent breaking-to-minor rule; general major gate; branch range that rejects rather than remaps. | A `0.x` line cannot reach `1.0.0` through a breaking commit while this policy remains active. | Maintainers intentionally decide to release `1.0.0` from a future `0.x` line. |
+| DEC-003 | Do not add a major-release workflow input or plugin. | Explicit user correction; the requirement is config policy, not release authorization machinery. | Manual input, repository variable, force-major plugin. | A future intentional `0.x` to `1.0.0` transition requires a reviewed config-policy change. | The project requests an explicit automated promotion mechanism. |
+| DEC-004 | Disable only semantic-release's success comment. | Targets bot-generated associated-PR notifications without disabling GitHub Releases. | Remove GitHub plugin; alter user watch settings. | Release/watch notifications controlled by GitHub users remain. | Plugin no longer supports comment suppression. |
+| DEC-005 | Back-sync identity is open same-repo `main` head + `dev` base. | Matches GitHub's actual PR uniqueness rule and moving branch semantics. | Exact SHA; catch-and-ignore all create failures. | Existing PR is reused even if its head advanced. | Sync changes to immutable snapshot branches. |
+| DEC-006 | Preserve second release workflow verification but skip its sync job. | Fixes duplicate mutation while retaining documented defense-in-depth. | Skip entire generated release run. | Some CI cost remains. | Second verification is intentionally removed in a separate policy change. |
+| DEC-007 | Use a dedicated `pull_request_target` preview workflow with trusted base code only. | Same-repo and fork PR comments need write permission; PR code must remain untrusted. | `pull_request` with App token; executing PR workflow; no comments for forks. | Initial workflow cannot preview its own promotion PR. | GitHub provides safe write tokens for fork `pull_request` workflows. |
+| DEC-008 | Preview the prospective squash commit, not individual PR commits. | Matches repository merge and release semantics. | Analyze head commits; infer from labels. | Preview changes when title/body changes even without source changes. | Merge strategy changes from squash. |
+| DEC-009 | Use a stable marker and update one bot-authored comment. | Prevents notification/comment spam and stale duplicates. | New comment per run; check summary only. | Workflow needs `pull-requests: write`. | GitHub supports a richer durable preview surface. |
+| DEC-010 | Phases 1-4 share one feature branch; production promotion uses a fresh release branch. | Shared contracts need one coherent review; production needs an accepted immutable snapshot. | One branch directly to main; stacked branches per phase. | Phase gates are plan/review gates, not separate PRs. | User requests independent PRs for each phase. |
+
+## Canonical Patterns and Contracts
+
+### Pattern Inventory
+
+| Pattern ID | Concern | Chosen Pattern | Canonical Location | Consumers |
+| --- | --- | --- | --- | --- |
+| PAT-001 | Pre-major release policy | Version-conditional breaking rule | `.github/scripts/release-policy.ts` | `release.config.mjs`, tests |
+| PAT-002 | Analysis result | Discriminated `release` / `no-release` result | `.github/scripts/release-preview.ts` | Preview CLI/workflow, tests |
+| PAT-003 | PR preview | Trusted-base prospective squash analysis | `release-preview.yml` | PRs to `main` |
+| PAT-004 | Sticky comment | Stable marker + bot-authored find/update/create | Preview script/workflow | GitHub PR API |
+| PAT-005 | Back-sync | Head/base idempotency plus release-commit guard | `release.yml` | Release runs |
+
+### PAT-001: Release Policy
+
+Representative contract:
+
+```ts
+export interface ReleaseRule {
+  breaking?: boolean;
+  release: 'major' | 'minor' | 'patch' | false;
+  scope?: string;
+  type?: string;
+}
+
+export function createReleaseRules(
+  currentVersion: string,
+): readonly ReleaseRule[];
+```
+
+Required behavior:
+
+```ts
+import packageJson from './package.json' with { type: 'json' };
+
+const releaseRules = createReleaseRules(packageJson.version);
+```
+
+The helper validates `currentVersion` as SemVer before inspecting its major. For major `0`, it prepends `{ breaking: true, release: 'minor' }`; for major `1` and later, it does not add a breaking rule. Both paths append the current repository-specific rules unchanged. The helper must not reproduce semantic-release's default rules. `release.config.mjs` reads the committed package version directly and supplies it to this helper.
+
+### PAT-002: Structured Preview Result
+
+```ts
+export interface NoReleasePreview {
+  readonly type: 'no-release';
+  readonly baseSha: string;
+  readonly headSha: string;
+}
+
+export interface ReleasePreview {
+  readonly type: 'release';
+  readonly baseSha: string;
+  readonly headSha: string;
+  readonly releaseType: 'major' | 'minor' | 'patch';
+  readonly version: string;
+  readonly notes: string;
+  readonly preMajorPolicyApplied: boolean;
+}
+
+export type PreviewResult = NoReleasePreview | ReleasePreview;
+```
+
+The semantic-release adapter must narrow unknown runtime output before constructing these types. Missing version/type/notes is an analysis failure, not `no-release`.
+
+### PAT-003: Prospective Squash Commit
+
+The workflow must:
+
+1. check out `github.event.pull_request.base.sha` using the trusted workflow from the base branch;
+2. install dependencies from that trusted checkout with `pnpm install --frozen-lockfile`;
+3. validate base and head identifiers as 40-character lowercase hex SHAs before use;
+4. write PR title and body from environment variables to a commit-message file without shell evaluation;
+5. create one local commit parented to base, using the trusted base tree and the message file;
+6. create a workspace-local bare remote under `.tmp/release-governance/` whose `main` points to that commit;
+7. run analysis-only semantic-release with `dryRun: true` and `ci: false`, using the prospective repository's committed package version.
+
+The PR head SHA is provenance only. The head tree and scripts must not be checked out or executed.
+
+### PAT-004: Sticky Comment
+
+Use a marker such as:
+
+```md
+<!-- flow-stack-release-preview -->
+```
+
+The rendered comment must contain:
+
+- `Release preview` heading;
+- predicted `no release` or `<type> -> v<version>`;
+- generated notes when a release exists;
+- base SHA and PR head SHA in a collapsed details block;
+- an explicit warning when a breaking change is capped to minor because the current version is pre-major;
+- marker retained after deterministic truncation.
+
+Query comments with pagination, select only a comment containing the exact marker and authored by `github-actions[bot]`, update the newest matching comment, and create only when none exists. Multiple matching bot comments are an operational anomaly: update the newest and report older IDs in logs without deleting them.
+
+### PAT-005: Back-Sync Guard
+
+Job condition semantics:
+
+```yaml
+if: >-
+  ${{ github.ref == 'refs/heads/main' &&
+  (github.event_name != 'push' ||
+  !startsWith(github.event.head_commit.message, 'chore(release): ')) }}
+```
+
+The open-PR query must match repository, open state, base `dev`, head repository equal to `github.repository`, and head ref `main`. It must not require `headRefOid == main_sha`.
+
+## Canonical Semantics
+
+### Release Classification Matrix
+
+| Case ID | Current Version | Trigger | Commit | Expected Result | Mutation |
+| --- | --- | --- | --- | --- | --- |
+| REL-001 | `0.2.3` | Push/manual dry run | `fix: ...` | patch (`0.2.4`) | normal release / none in dry run |
+| REL-002 | `0.2.3` | Push/manual dry run | `feat: ...` | minor (`0.3.0`) | normal release / none in dry run |
+| REL-003 | `0.2.3` | Push/manual dry run | breaking `feat!` or footer | minor (`0.3.0`) | normal release / none in dry run |
+| REL-004 | `1.0.0` | Push/manual dry run | breaking `feat!` or footer | major (`2.0.0`) | normal release / none in dry run |
+| REL-005 | `2.4.1` | Push/manual dry run | breaking commit | major (`3.0.0`) | normal release / none in dry run |
+| REL-006 | Any valid version | Any | `chore(deps): ...` | patch | normal release / none in dry run |
+| REL-007 | Any valid version | Any | `chore(deps-dev)`, `ci`, `test`, or `chore(release)` only | no release | none |
+| REL-008 | Invalid committed version | Any | any | configuration failure before analysis | none |
+
+### Back-Sync Matrix
+
+| Case ID | Trigger/State | Existing PR | Expected Result | Mutation | Error |
+| --- | --- | --- | --- | --- | --- |
+| SYN-001 | Generated release commit push | any | sync job skipped | none | none |
+| SYN-002 | Normal/manual release; `main` not ahead | none | successful no-op | none | none |
+| SYN-003 | Normal/manual release; open same-repo `main` -> `dev` PR | same or different observed SHA | successful no-op with PR details | none | none |
+| SYN-004 | Normal/manual release; ahead and no PR | none | create one PR | PR create | none |
+| SYN-005 | GitHub API/token failure | unknown | workflow failure | no assumed mutation | surfaced error |
+| SYN-006 | Create races with another actor | PR appears after query | workflow failure unless an immediate narrow requery proves the exact head/base PR now exists | possible external PR | surfaced or proven no-op |
+
+If implementation adds the narrow SYN-006 recovery, it may suppress only GitHub's duplicate-head/base condition after requery. It must not blanket-ignore `gh pr create` failures.
+
+### Preview Matrix
+
+| Case ID | PR State/Input | Expected Comment | Workflow Result |
+| --- | --- | --- | --- |
+| PRV-001 | Patch title | predicted patch and version | success |
+| PRV-002 | Feature title | predicted minor and version | success |
+| PRV-003 | Breaking title/body at `0.x` | predicted minor plus pre-major warning | success |
+| PRV-004 | Non-releasing title | explicit no-release result | success |
+| PRV-005 | Existing marker comment | update same comment ID | success |
+| PRV-006 | Edited title/body | recompute and update | success |
+| PRV-007 | New head commit | recompute and update | success |
+| PRV-008 | Analysis malformed/fails | no misleading comment update | failure |
+| PRV-009 | Comment API fails | analysis may be logged without secrets | failure |
+| PRV-010 | Oversized notes | bounded deterministic comment with summary/marker retained | success |
+| PRV-011 | Breaking title/body at `1.x+` | predicted major with no cap warning | success |
+| PRV-012 | Two sequential pushed commits | same comment ID updated once per resulting `synchronize` event, ending with each event's head SHA | success |
+
+## Error and Failure Semantics
+
+| Condition | Public Behavior | Retryable | Observability |
+| --- | --- | --- | --- |
+| Invalid committed package version | Fail configuration before analysis | no | Unit/config-load test |
+| Analyzer contract differs from assumptions | Stop implementation and revise plan | no | Phase 1 closeout blocker |
+| Semantic-release analysis fails | Workflow fails; existing comment remains unchanged | yes after correction | Error summary without secrets/raw environment |
+| No release proposed | Successful explicit no-release comment | no | Sticky comment and workflow summary |
+| Duplicate back-sync PR exists | Successful no-op | no | PR number, URL, head SHA |
+| Back-sync API failure | Workflow fails | yes | `gh` error with token masked |
+| Preview comment too large | Deterministically truncate notes | no | Comment states truncation |
+| Preview comment mutation fails | Workflow fails | yes | API status and PR number, no token |
+
+## Security, Privacy, and Trust Boundaries
+
+- PR author-controlled title, body, head SHA, and source repository are untrusted.
+- `pull_request_target` executes only workflow and scripts from trusted `main`.
+- The workflow must not use `actions/checkout` with `head.sha`, merge ref, or PR repository/ref.
+- The workflow must not run `pnpm install`, Node imports, build, tests, or semantic-release configuration from the PR branch.
+- Metadata reaches shell through environment variables and commit-message files, never expression interpolation inside shell source.
+- `GITHUB_TOKEN` is job-scoped and least privilege. The Release Automation App secret is unavailable.
+- Semantic-release preview loads analysis-only plugins and points to a local bare repository, making publication and remote mutation mechanically unavailable.
+- Generated Markdown is treated as text. Preserve code fences/escaping and cap size; do not embed raw HTML from PR content outside semantic-release's normal notes without sanitization.
+- No notification recipient data, email addresses, or GitHub account preferences are stored or logged.
+
+## Data, Persistence, and Migration
+
+No product data or schema changes occur.
+
+Repository-persistent changes are workflow/config/script/test/document files. GitHub-persistent changes are one sticky comment per PR and normal release/back-sync artifacts. No migration is required.
+
+The `v1.0.0` package, tag, release, and npm distribution tag remain untouched. Rollback is a normal revert of workflow/config changes through protected branches; already-published releases are never unpublished as rollback.
+
+## Concurrency, Atomicity, and Idempotency
+
+- Existing `release-${{ github.ref }}` concurrency remains non-cancelling so release runs serialize.
+- Release-commit sync is skipped before mutation.
+- Open head/base PR state is checked before create; GitHub remains final atomic enforcer.
+- Preview concurrency is `release-preview-${{ github.event.pull_request.number }}` with `cancel-in-progress: true`.
+- Before updating a comment, the job should confirm the analyzed PR head SHA still equals the current event/current API head; stale runs must exit without overwriting newer results.
+- Comment upsert uses comment ID when found, so reruns are idempotent.
+- Publication remains semantic-release's responsibility for tag/version idempotency.
+
+## Observability and Operations
+
+- Release analysis may log whether pre-major policy is active and the validated current version; it must not log unrelated package metadata.
+- Sync logs current main SHA, ahead count, and existing/created PR URL.
+- Preview logs PR number, base/head SHA, result type/version, marker-comment ID, and create/update action.
+- Preview writes the same concise summary to `$GITHUB_STEP_SUMMARY` as it posts to the PR.
+- No new dashboard or alert is required for this single-package repository.
+- Workflow failure remains visible through GitHub Checks; maintainers rerun after correcting configuration.
+- Operational docs distinguish repository-controlled semantic-release comments from user-controlled GitHub email/watch settings.
+
+## Testing Strategy
+
+| Layer | Responsibility | Location | Required Cases |
+| --- | --- | --- | --- |
+| Unit | Policy, parsing, result narrowing, rendering, truncation | `test/tooling/release-policy.test.ts`, `release-preview.test.ts` | REL, PRV pure cases |
+| Integration | Real semantic-release analyzer against temporary Git histories | `test/tooling/release-policy.integration.test.ts` or same focused suite | REL-003 through REL-007, REL-009 |
+| Workflow source | Trigger, permissions, trusted checkout, environment, conditions | Focused test helper or explicit source assertions | SYN-001, SR-001 through SR-003 |
+| Hosted | GitHub event/API/token/comment/back-sync behavior | Controlled workflows/PRs | SYN-001 through SYN-005, PRV-001 through PRV-009 |
+| Repository | Existing package behavior | Current Vitest suites and quality gates | all existing 263+ tests |
+
+Tests that create repositories must use unique children of `.tmp/release-governance/`, register cleanup before mutation, and remove them in `finally`/test cleanup. Failed-operation tests verify that no release comment is replaced with a false no-release result and no existing back-sync PR is modified.
+
+## Validation Protocol
+
+Use the repository's actual gate order:
+
+```powershell
+corepack pnpm run build
+corepack pnpm run typecheck
+corepack pnpm test
+corepack pnpm run lint
+corepack pnpm run format:check
+git diff --check
+```
+
+Focused checks:
+
+```powershell
+corepack pnpm exec vitest run test/tooling/release-policy.test.ts
+corepack pnpm exec vitest run test/tooling/release-preview.test.ts
+```
+
+If integration tests are in a third file, include it explicitly in focused validation.
+
+Repair commands, used only when their corresponding check fails:
+
+```powershell
+corepack pnpm run lint:fix
+corepack pnpm run format
+```
+
+After `lint:fix`, inspect changes and rerun `lint`; do not restart build, typecheck, and test solely because automatic lint cleanup ran. After `format`, inspect changes and rerun `format:check`; do not restart build, typecheck, test, or lint solely because formatting changed. Broader validation is required when a repair changes behavior, types, workflow configuration, or anything beyond mechanical lint/format output.
+
+No dependency installation/update, service/container startup, global tool change, or out-of-workspace scratch directory is authorized. GitHub workflow syntax/event behavior requires hosted validation because no repository action-linter command is currently defined.
+
+## Implementation Strategy
+
+Five phases separate policy contracts, release workflow behavior, privileged PR preview, integration/documentation, and production promotion. Phases 1-4 remain reviewable as one coherent feature branch while retaining mandatory acceptance stops. Phase 5 changes branch because production promotion and hosted proof must use the exact accepted `dev` state and trusted `main` workflow context.
+
+## Phase 1: Canonical Release Policy and Contracts
+
+### Goal
+
+Encode and prove the major-version policy independently of release workflow mutation.
+
+### Status and Gate
+
+- Status: NOT STARTED
+- Branch: create `feature/release-governance` from authorized `dev`
+- Start requires: `Authorize Phase 1.`
+- Exit requires: all Phase 1 acceptance criteria and explicit user acceptance
+- Mandatory stop: request authorization for Phase 2; do not change workflow behavior yet
+
+### Requirements Addressed
+
+FR-001, FR-002, DR-001, DR-002, DR-003, AR-001, AR-002, AR-007, TR-001, TR-002, PR-003
+
+### Phase Task Backlog
+
+| Task ID | Task | Requirements | Step | Dependencies | Deliverable | Verification | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P1-T001 | Create feature branch and workspace scratch policy | PR-003, AR-007 | 1.1 | None | Branch and ignored `.tmp/release-governance/` | Branch/status review | NOT STARTED |
+| P1-T002 | Implement release-policy helper | DR-001, DR-002, DR-003, AR-002 | 1.2 | P1-T001 | Pure helper and typed contract | Unit tests/typecheck | NOT STARTED |
+| P1-T003 | Wire policy into semantic-release config | FR-001, FR-002, AR-001 | 1.3 | P1-T002 | Config consumes canonical rules | Config import and focused tests | NOT STARTED |
+| P1-T004 | Prove analyzer semantics | TR-001, TR-002 | 1.4 | P1-T003 | Unit and temporary-repo integration tests | Focused Vitest commands | NOT STARTED |
+
+### Package or Component Allowlist
+
+- semantic-release configuration;
+- trusted GitHub tooling scripts;
+- tooling tests;
+- local scratch ignore;
+- canonical plan updates.
+
+### File Allowlist
+
+- `.gitignore`
+- `.github/scripts/release-policy.ts`
+- `release.config.mjs`
+- `test/tooling/release-policy.test.ts`
+- `test/tooling/release-policy.integration.test.ts` only if separation is justified
+- `docs/development/release-governance-plan.md`
+
+### Explicit Denylist
+
+- `.github/workflows/**`
+- package dependencies and lockfile
+- product `src/**`
+- release/CI runbooks
+- tags, npm, GitHub Releases, and remote branches other than the authorized feature branch
+
+### Detailed Steps
+
+#### 1.1 Create branch and scratch boundary
+
+Create `feature/release-governance` from the authorized `dev` SHA. Add only `.tmp/release-governance/` to `.gitignore`; tests must clean it and phase closeout must show no generated files.
+
+#### 1.2 Implement PAT-001
+
+Create the exact policy contract above. Validate the committed version, derive its major, and reuse one immutable array for the existing custom rules. Add the breaking-to-minor rule only when the major is `0`.
+
+#### 1.3 Wire canonical config
+
+Import the committed `package.json` version and the rule helper from `release.config.mjs`. Pass that version to the commit-analyzer rules. Preserve analysis-only and production plugin sets otherwise. Do not configure notification behavior until Phase 2.
+
+#### 1.4 Prove the installed runtime contract
+
+Test helper output and actual semantic-release behavior using workspace-local repositories. Cases must include breaking at `v0.2.3` -> `v0.3.0`, breaking at `v1.0.0` -> `v2.0.0`, breaking at a later major -> next major, invalid committed version -> configuration failure, dependency patch, and no-release commits. Verify ASM-002 and ASM-004. If either fails, stop and revise the plan.
+
+### Public API and Contract Impact
+
+No package public API impact. Internal automation gains the `createReleaseRules(currentVersion)` contract.
+
+### Migration and Rollback
+
+No release occurs in this phase. Reverting helper/config/test files restores current analysis. Do not change version or changelog.
+
+### Phase Validation
+
+```powershell
+corepack pnpm exec vitest run test/tooling/release-policy.test.ts
+corepack pnpm run typecheck
+corepack pnpm run lint
+corepack pnpm run format:check
+git diff --check
+```
+
+Include the integration test file if separate.
+
+### Phase Acceptance Criteria
+
+- AC-001 and AC-002 pass locally.
+- Invalid committed versions fail before release analysis.
+- Existing rules are byte-for-behavior equivalent.
+- No workflow, package, source, version, or changelog file changed.
+- `.tmp/release-governance/` is absent after tests.
+
+### Phase Closeout
+
+Use the canonical closeout template in this plan. Stop and request Phase 1 acceptance plus Phase 2 authorization.
+
+## Phase 2: Release Workflow, Notifications, and Back-Merge
+
+### Goal
+
+Suppress per-associated-item success comments and make back-sync match GitHub's real invariant.
+
+### Status and Gate
+
+- Status: NOT STARTED
+- Branch: continue `feature/release-governance`
+- Start requires: Phase 1 accepted and `Authorize Phase 2.`
+- Exit requires: Phase 2 acceptance
+- Mandatory stop: request authorization for Phase 3
+
+### Requirements Addressed
+
+FR-003 through FR-006, DR-004, AR-005, SR-006, TR-003, AC-003 through AC-006
+
+### Phase Task Backlog
+
+| Task ID | Task | Requirements | Step | Dependencies | Deliverable | Verification | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P2-T001 | Add manual major input and env propagation | FR-003 | Removed | User correction | None; mechanism explicitly excluded | Plan revision 3 | REMOVED |
+| P2-T002 | Disable semantic-release success comments | FR-006, DEC-004 | 2.2 | Phase 1 | GitHub plugin option | Runtime config assertion | NOT STARTED |
+| P2-T003 | Guard release-commit synchronization | FR-004, DEC-006 | 2.3 | Phase 1 | Job condition | Event-condition tests/review | NOT STARTED |
+| P2-T004 | Repair back-sync PR equivalence | FR-005, DR-004 | 2.4 | P2-T003 | Head/base preflight | Script/source test and review | NOT STARTED |
+| P2-T005 | Confirm one canonical release policy path | FR-003, AR-001 | 2.1 | Phase 1 | No workflow bypass; dry run shares config | Workflow/config review | NOT STARTED |
+
+### File Allowlist
+
+- `.github/workflows/release.yml`
+- `release.config.mjs`
+- `.github/scripts/release-policy.ts` only for an accepted Phase 1 defect
+- Phase 1 policy tests and a focused workflow-source test if established
+- `docs/development/release-governance-plan.md`
+
+### Explicit Denylist
+
+- new preview workflow/scripts
+- package dependencies and lockfile
+- product source/tests
+- runbook docs
+- remote publication or real major release
+
+### Detailed Steps
+
+#### 2.1 Confirm no alternate major path
+
+Do not add a release input, environment flag, or plugin that bypasses the version-conditional policy. Confirm the existing manual dry run uses the same `release.config.mjs` policy as push releases.
+
+#### 2.2 Suppress plugin comments
+
+After verifying ASM-003 against installed/runtime behavior, configure the production GitHub plugin as `['@semantic-release/github', { successComment: false }]`. Do not remove the plugin or disable GitHub Release creation. If the installed version uses a different supported option contract, stop and revise this plan before substitution.
+
+#### 2.3 Skip generated release sync
+
+Apply PAT-005 to `sync-main-into-dev`. Preserve `needs: release` and normal/manual release behavior. Do not skip the second verify/release jobs.
+
+#### 2.4 Match GitHub PR identity
+
+Query all open PRs for base `dev` and head owner:`main`; validate repository/ref fields. Any valid match exits zero with number, URL, current PR head SHA, and current main SHA. Remove exact-SHA matching. Optionally handle the narrow post-query race only as defined by SYN-006.
+
+### Public API and Contract Impact
+
+No workflow input or package API change.
+
+### Migration and Rollback
+
+Default false makes deployment fail-closed. Revert restores standard majors/comments and old sync behavior. No publication occurs during local validation.
+
+### Phase Validation
+
+```powershell
+corepack pnpm exec vitest run test/tooling/release-policy.test.ts
+corepack pnpm run typecheck
+corepack pnpm run lint
+corepack pnpm run format:check
+git diff --check
+```
+
+### Phase Acceptance Criteria
+
+- AC-003 passes by source/config review.
+- `release.yml` contains no alternate major-release mechanism.
+- `successComment: false` is verified without removing GitHub Release plugin.
+- SYN-001 through SYN-005 logic is reviewable and deterministic.
+- PR #48 failure shape is covered: existing head/base with differing observed SHA exits zero.
+
+### Phase Closeout
+
+Stop and request Phase 2 acceptance plus Phase 3 authorization.
+
+## Phase 3: Secure Pull Request Release Preview
+
+### Goal
+
+Add a trusted-base, sticky release-preview comment for all PRs targeting `main`.
+
+### Status and Gate
+
+- Status: NOT STARTED
+- Branch: continue `feature/release-governance`
+- Start requires: Phase 2 accepted and `Authorize Phase 3.`
+- Exit requires: Phase 3 acceptance
+- Mandatory stop: request authorization for Phase 4
+
+### Requirements Addressed
+
+FR-007 through FR-009, DR-005 through DR-007, AR-003, AR-004, AR-006, SR-001 through SR-005, OR-001, OR-002, TR-001, TR-003
+
+### Phase Task Backlog
+
+| Task ID | Task | Requirements | Step | Dependencies | Deliverable | Verification | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P3-T001 | Implement structured analysis adapter | AR-003, PAT-002 | 3.1 | Phase 2 | Preview result helper/CLI | Unit/integration tests | NOT STARTED |
+| P3-T002 | Implement bounded sticky-comment rendering | FR-009, DR-007, SR-005 | 3.2 | P3-T001 | Markdown renderer/marker | Unit tests | NOT STARTED |
+| P3-T003 | Add trusted-base preview workflow | FR-007, SR-001, SR-002, SR-003 | 3.3 | P3-T001 | `release-preview.yml` | Source/security review | NOT STARTED |
+| P3-T004 | Implement idempotent comment upsert and stale guard | FR-008, OR-001, OR-002 | 3.4 | P3-T002, P3-T003 | Query/update/create flow | Tests and review | NOT STARTED |
+| P3-T005 | Complete preview semantic/failure tests | FR-008, OR-001, TR-001, TR-003 | 3.5 | P3-T001 through P3-T004 | Focused test suite including per-head updates | Focused Vitest | NOT STARTED |
+
+P3-T001 and P3-T002 may be developed together. P3-T003 may begin only after P3-T001's CLI/output contract is fixed. No other parallel workstream is authorized.
+
+### File Allowlist
+
+- `.github/scripts/release-preview.ts`
+- `.github/workflows/release-preview.yml`
+- `test/tooling/release-preview.test.ts`
+- Phase 1 policy helper/tests only for integration
+- `.gitignore` only if Phase 1 scratch entry needs accepted correction
+- `docs/development/release-governance-plan.md`
+
+### Explicit Denylist
+
+- `release.yml` and production plugin changes except a plan-approved defect in accepted Phase 2
+- `ci.yml`, `verify.yml`, `pr-title.yml`
+- package dependencies/lockfile
+- product source/tests
+- remote PR creation during this local phase
+
+### Detailed Steps
+
+#### 3.1 Implement PAT-002
+
+Use semantic-release programmatically with `dryRun: true`, `ci: false`, local repository URL, and `RELEASE_ANALYSIS_ONLY=true`. Narrow the result. Emit machine-readable JSON to a designated file or `$GITHUB_OUTPUT`, not by scraping human CLI logs. Do not print raw environment or stack traces to comment output.
+
+#### 3.2 Render bounded Markdown
+
+Implement pure rendering and deterministic truncation below GitHub's maximum comment size. Preserve marker, summary, warning, and provenance before notes. Test special Markdown, multiline notes, and boundary sizes.
+
+#### 3.3 Create trusted workflow
+
+Add `pull_request_target` for `opened`, `reopened`, `synchronize`, `edited`, and `ready_for_review`, with base branch `main`. Use explicit top-level read permissions and job permissions of `contents: read`, `pull-requests: write`. Checkout the base SHA only with credentials unpersisted. Install trusted base dependencies with frozen lockfile. Follow PAT-003.
+
+#### 3.4 Upsert safely
+
+Use GitHub API/`gh api` with metadata passed through environment. Paginate comments, match exact marker plus bot author, and update/create. Before mutation, verify current PR head SHA still equals analyzed head SHA. Fail on API errors.
+
+#### 3.5 Test semantics and failures
+
+Cover PRV-001 through PRV-012 where locally testable. Simulate sequential distinct event head SHAs and prove each accepted event produces a new body for the same comment ID while an older/superseded head cannot overwrite the latest result. Explicitly prove analysis failure does not produce or overwrite a no-release comment. Assert workflow source lacks App secrets, OIDC, write contents, and PR-head checkout patterns if a stable source-test pattern is added.
+
+### Public API and Contract Impact
+
+New internal preview result contract and a new non-required PR check/comment. No package API impact and no change to required `Verification` name.
+
+### Migration and Rollback
+
+Workflow is inert until present on trusted `main`. Reverting removes future previews; existing comments remain historical unless manually deleted. No production release mutation is available.
+
+### Phase Validation
+
+```powershell
+corepack pnpm exec vitest run test/tooling/release-preview.test.ts
+corepack pnpm exec vitest run test/tooling/release-policy.test.ts
+corepack pnpm run typecheck
+corepack pnpm run lint
+corepack pnpm run format:check
+git diff --check
+```
+
+### Phase Acceptance Criteria
+
+- Preview contracts and all local PRV cases pass.
+- Security review confirms no untrusted checkout/execution and least privilege.
+- Comment output is deterministic, bounded, and marker-preserving.
+- Stale runs cannot overwrite a newer preview.
+- No existing verification or release mutation path is weakened.
+
+### Phase Closeout
+
+Stop and request Phase 3 acceptance plus Phase 4 authorization.
+
+## Phase 4: Documentation, Full Local Validation, and Integration to Dev
+
+### Goal
+
+Align canonical documentation, run the full gate, review the complete change, and integrate the accepted feature branch into `dev`.
+
+### Status and Gate
+
+- Status: NOT STARTED
+- Branch: continue `feature/release-governance`
+- Start requires: Phase 3 accepted and `Authorize Phase 4.`
+- Exit requires: documentation and all local gates accepted, then PR merged to `dev`
+- Mandatory stop: request authorization for Phase 5; do not promote to `main`
+
+### Requirements Addressed
+
+PR-004, PR-005, TR-004, AC-009, AC-010
+
+### Phase Task Backlog
+
+| Task ID | Task | Requirements | Step | Dependencies | Deliverable | Verification | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P4-T001 | Update release runbook | PR-004 | 4.1 | Phases 1-3 | Accurate release policy/operations | Docs review/format | NOT STARTED |
+| P4-T002 | Update CI/index/contributor docs as required | PR-004 | 4.2 | P4-T001 | Preview/trust/branch docs | Link and docs review | NOT STARTED |
+| P4-T003 | Run full validation and integrate to dev | TR-004, PR-003 | 4.3 | P4-T001, P4-T002 | Green gate and accepted PR to `dev` | Commands, PR checks, merge SHA | NOT STARTED |
+
+### File Allowlist
+
+- `docs/development/release.md`
+- `docs/development/ci.md`
+- `docs/development/README.md`
+- `docs/README.md`
+- `CONTRIBUTING.md` only where current release classification becomes inaccurate
+- all files accepted in Phases 1-3 for defect repair
+- `docs/development/release-governance-plan.md`
+
+### Explicit Denylist
+
+- new functional scope
+- package dependencies/lockfile
+- product source/API
+- `main`, tags, npm, or GitHub Releases
+
+### Detailed Steps
+
+#### 4.1 Update release operations
+
+Document breaking->minor behavior at `0.x`, normal breaking->major behavior at `1.x+`, retained `v1.0.0`, the reviewed config change required for a future intentional `0.x` -> `1.0.0` transition, success-comment suppression, preserved GitHub Releases, release-commit sync skip, head/base no-op, and recovery.
+
+#### 4.2 Update CI and contributor guidance
+
+Add preview workflow topology, triggers, trusted-base security model, sticky behavior, first-deployment limitation, and hosted verification. Update any statement that still says all breaking commits automatically major.
+
+#### 4.3 Validate and integrate
+
+Run all focused and complete gates. Inspect diff and status. Open one PR from `feature/release-governance` to `dev`, obtain required checks/review, and merge only after user accepts Phase 4 implementation. Record merge SHA in plan.
+
+### Public API and Contract Impact
+
+Documentation-only additions in this phase. Prior internal release-policy and preview contracts become documented.
+
+### Migration and Rollback
+
+Revert PR on `dev` before promotion if needed. Nothing is active on `main` yet.
+
+### Phase Validation
+
+```powershell
+corepack pnpm run build
+corepack pnpm run typecheck
+corepack pnpm test
+corepack pnpm run lint
+corepack pnpm run format:check
+git diff --check
+git status --short
+```
+
+### Phase Acceptance Criteria
+
+- All local gates pass.
+- PR to `dev` passes `Verification` and title validation.
+- Docs match exact implementation and do not imply account-level email suppression.
+- Accepted feature PR is merged to `dev` and feature branch may then be deleted.
+- Plan records merge SHA and stops before production promotion.
+
+### Phase Closeout
+
+Stop and request explicit Phase 4 acceptance and Phase 5 authorization.
+
+## Phase 5: Promotion to Main and Hosted Proof
+
+### Goal
+
+Promote the exact accepted `dev` snapshot to `main`, activate the automation, and collect hosted evidence without unintentionally publishing a release.
+
+### Status and Gate
+
+- Status: NOT STARTED
+- Branch: create `release/release-governance` from accepted `dev`
+- Start requires: Phase 4 accepted and `Authorize Phase 5.`
+- Exit requires: all hosted acceptance evidence and explicit user acceptance
+- Mandatory stop: no additional release or corrective work without plan revision
+
+### Requirements Addressed
+
+TR-005, AC-003 through AC-010, PR-003, PR-005
+
+### Phase Task Backlog
+
+| Task ID | Task | Requirements | Step | Dependencies | Deliverable | Verification | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P5-T001 | Create immutable promotion branch/PR | PR-003, AC-009 | 5.1 | Phase 4 merge | `release/release-governance` PR to main | Diff/PR checks | NOT STARTED |
+| P5-T002 | Activate non-releasing promotion | AC-003, AC-004 | 5.2 | P5-T001 | Main merge with no package release | Release run evidence | NOT STARTED |
+| P5-T003 | Validate sticky preview on disposable PR | AC-007, AC-008 | 5.3 | P5-T002 | Same comment updated for each sequential commit/head event | Comment ID, head SHAs, run IDs, and logs | NOT STARTED |
+| P5-T004 | Validate default and major dry runs | AC-001, AC-003 | Removed | User correction | None; no alternate major mode exists | Plan revision 3 | REMOVED |
+| P5-T005 | Validate next real release behavior and close plan | AC-004, AC-005, AC-006, AC-010 | 5.5 | P5-T002; next warranted release | Release/back-sync/comment evidence | Hosted logs/artifacts and plan closeout | NOT STARTED |
+| P5-T006 | Validate canonical manual dry run | AC-003 | 5.4 | P5-T002 | Safe dry-run evidence | Workflow run and config evidence | NOT STARTED |
+
+P5-T003 may run after P5-T002. P5-T005 may wait for the next warranted real release; until then the plan remains `AWAITING ACCEPTANCE`, not `COMPLETE`.
+
+### Component Allowlist
+
+- Git branches and PRs named in this phase;
+- manual `Release` workflow dry-run dispatches;
+- disposable validation PR/comment;
+- plan evidence updates;
+- corrective edits only after a documented revision and authorization.
+
+### File Allowlist
+
+- `docs/development/release-governance-plan.md` for evidence/status updates
+- no implementation file changes unless hosted validation exposes an in-scope defect and the plan is revised first
+
+### Explicit Denylist
+
+- manual npm publication outside `release.yml`
+- any temporary release-policy bypass not represented by a reviewed plan revision
+- merging the disposable validation PR
+- force pushes, tag changes, unpublish, npm dist-tag changes
+- unrelated fixes discovered in hosted runs
+
+### Detailed Steps
+
+#### 5.1 Create promotion snapshot
+
+Create `release/release-governance` from accepted `dev`. Open PR to `main` titled `ci: govern major releases and preview release impact`; ensure body has no breaking footer. Compare branch SHA to accepted dev SHA. Run required checks.
+
+#### 5.2 Merge and inspect activation
+
+After explicit approval, merge promotion. Confirm resulting main commit is non-releasing. Inspect release workflow: verification succeeds, semantic-release no-ops, and normal sync creates/reuses one `main`->`dev` PR. Merge that sync to `dev` according to normal process.
+
+#### 5.3 Exercise sticky preview
+
+From updated `main`, create `test/release-preview-validation` with one harmless temporary documentation diff. Open PR to `main` with a patch-classified title and record the comment ID and head SHA. Push two additional harmless commits separately, waiting for each `synchronize` run to complete; confirm each run recomputes the preview, updates the same comment ID, and records that event's head SHA. Then edit title/body to feature and breaking cases and confirm the same comment updates. Also test that a superseded run cannot overwrite the newest head result. A push containing multiple commits may emit one `synchronize` event for only the final head; the contract is one update per GitHub head-change event, not one update for inaccessible intermediate SHAs. Inspect logs for base checkout and permissions. Close without merge and delete branch.
+
+#### 5.4 Confirm the single dry-run path
+
+On `main`, run the existing safe dry run and confirm it loads the same version-conditional configuration used by push releases. It may correctly no-op because the current package is already `1.x` and no release commit is pending. Pre-major behavior is proven by Phase 1's temporary repositories rather than a production bypass.
+
+#### 5.5 Validate next real release
+
+At the next warranted release, inspect npm provenance, tag, GitHub Release, associated PR/issue comments, generated release commit's second run, and back-sync. Confirm no semantic-release success comments and sync job skipped on release commit. Record evidence and close plan. If waiting for this event is unacceptable, user may explicitly revise acceptance to controlled non-production evidence; do not silently weaken it.
+
+### Public API and Contract Impact
+
+Automation becomes active. No package source API change. At the current `1.x` version, breaking commits retain normal major behavior and publication remains protected by the existing `npm` environment review.
+
+### Migration and Rollback
+
+Before merge, close promotion PR. After merge, revert through a protected PR to `main`, then sync revert to `dev`. Do not rewrite releases. A failed preview workflow may be reverted independently; a failed publication follows existing corrective patch/deprecation policy.
+
+### Phase Validation
+
+Hosted evidence plus local gates if any corrective revision changes files. Exact local commands remain the Validation Protocol block.
+
+### Phase Acceptance Criteria
+
+- Promotion was non-releasing.
+- Preview create/update/security cases pass.
+- The single manual dry-run path remains safe and uses the canonical policy.
+- Next real release preserves npm/tag/GitHub Release and suppresses success comments.
+- Release commit's second run skips sync.
+- Existing back-sync PR is a successful no-op.
+- Plan contains final evidence, accepted deviations, and no unresolved gate.
+
+### Phase Closeout
+
+Set status `AWAITING ACCEPTANCE`, present full closeout, and stop. Set `COMPLETE` only after explicit user acceptance.
+
+## Cross-Phase Dependencies
+
+| Dependency | Producer | Consumer | Gate |
+| --- | --- | --- | --- |
+| Release policy contract | Phase 1 | Phases 2-3 | Phase 1 accepted |
+| Canonical version-conditional policy | Phase 1 | Phases 3-5 | Phase 1 accepted |
+| Analysis result/comment contract | Phase 3 | Phase 4 docs, Phase 5 proof | Phase 3 accepted |
+| Accepted implementation on dev | Phase 4 | Phase 5 promotion | Phase 4 accepted and merged |
+| Trusted workflow on main | Phase 5 promotion | Hosted preview proof | P5-T002 complete |
+| Real release event | Phase 5 | Final acceptance | P5-T005 evidence or approved plan revision |
+
+## Cross-Phase Drift Guards
+
+Stop and request a plan revision when:
+
+1. a required edit falls outside the active allowlist;
+2. user-authored changes overlap an in-scope file ambiguously;
+3. semantic-release programmatic result differs from PAT-002;
+4. analyzer custom-rule precedence does not produce REL-003/REL-005;
+5. `successComment: false` is unsupported or disables GitHub Release behavior;
+6. any workflow input, environment flag, or alternate analyzer bypasses the committed-version policy;
+7. preview requires checking out or executing PR code;
+8. preview requires App credentials, OIDC, contents write, or npm environment;
+9. GitHub token cannot update comments under the planned trust model;
+10. squash merge is disabled or PR title/body no longer represent release commit semantics;
+11. back-sync requires an immutable snapshot instead of moving `main`;
+12. validation requires dependency installation/update or out-of-workspace writes;
+13. a required action is absent from the active phase backlog;
+14. an unrelated defect appears necessary for completion;
+15. implementation would alter `v1.0.0`, npm `latest`, package source/API, or branch protection;
+16. the initial promotion commit would itself trigger an unintended package release;
+17. any security, privacy, notification, or cost implication exceeds these assumptions.
+
+## Explicit Scope Exclusions
+
+1. Repairing semantic version history by deleting `v1.0.0`.
+2. Guaranteeing no GitHub email is sent; only repository-controlled semantic-release success comments are disabled.
+3. Posting previews to integration PRs targeting `dev`.
+4. Making preview a required branch-protection check.
+5. Replacing release notes, changelog, npm, provenance, or GitHub Release plugins.
+6. Fixing unrelated CI or package issues.
+
+## Implementation Handoff Protocol
+
+1. Read this document in full before planning the next phase.
+2. Read it again before starting the authorized phase.
+3. Confirm active phase, branch, allowlist, denylist, requirements, backlog, and validation commands.
+4. Confirm exact authorization and execute only active backlog tasks.
+5. Do not rely on chat summaries as a substitute for this document.
+6. Add newly discovered work through a plan revision before execution; out-of-scope or design-changing work requires user consultation and explicit direction.
+7. Update this plan at the phase boundary with task status and evidence.
+8. Stop after closeout and request explicit acceptance/authorization.
+
+### Handoff to Implementing Agent
+
+- Canonical plan: `docs/development/release-governance-plan.md`
+- Authorized phase: None
+- Plan version/revision: 2.1/4
+- Baseline commit: `3a358899e1b98badd3ce7f9e06fc109bae5d2887`
+- Mandatory first action after authorization: reread the entire plan, then create `feature/release-governance` from the authorized `dev` baseline.
+- Active backlog: none until Phase 1 authorization
+- Stop condition: complete active phase closeout and request acceptance.
+- Prohibited action: do not begin another phase or branch without acceptance and authorization.
+
+## Phase Closeout Template
+
+```md
+### Phase N Closeout
+
+- Status: AWAITING ACCEPTANCE
+- Authorization received: <date and exact quote/reference>
+- Branch and SHA: <branch / sha>
+- Started on: <date>
+- Completed on: <date>
+- Plan revision at start: <revision>
+- Plan revision at closeout: <revision>
+- Requirements addressed: <IDs>
+- Backlog results:
+  - Completed: <task IDs>
+  - Removed by approved revision: <IDs or None>
+  - Remaining: None / <IDs>
+  - Tasks added during implementation: None / <IDs and revision>
+- Changed files: <paths>
+- Public API changes: None / <details>
+- Workflow/release changes: <details>
+- Validation: <command and PASS/FAIL>
+- Hosted evidence: None required / <run and PR references>
+- Automated repairs: None / <commands and inspected changes>
+- Security evidence: <details>
+- Deviations: None / <approved revision>
+- Unresolved issues: None / <details>
+- Next action: STOP. Await explicit phase acceptance and next-phase authorization.
+```
+
+## Final Definition of Done
+
+The initiative is complete only when:
+
+1. every phase is explicitly accepted;
+2. all active requirements and acceptance criteria are satisfied;
+3. pre-major and stable release semantic cases pass;
+4. back-sync cases pass without duplicate failures;
+5. preview cases pass locally and on GitHub;
+6. full package quality gates pass;
+7. docs reflect deployed behavior;
+8. no App/npm/OIDC capability reaches preview;
+9. a real release proves GitHub Release preservation and success-comment suppression;
+10. the plan contains final branch/PR/run evidence and no unresolved gate;
+11. final document status is explicitly set to `COMPLETE` after user acceptance.
+
+## Plan Readiness Checklist
+
+- [x] User and environment requirements are consolidated with stable IDs.
+- [x] Current-state claims have repository or supplied-run evidence.
+- [x] Foundational architecture, naming, and branch strategy are settled.
+- [x] Core types, patterns, usage, and trust boundaries are explicit.
+- [x] Observable release, sync, preview, and error semantics are defined.
+- [x] Security, permissions, concurrency, rollback, notifications, and operations are addressed.
+- [x] Phases have conceptual boundaries, backlogs, allowlists, denylists, gates, branches, and stops.
+- [x] Every planned implementation action maps to a stable phase task.
+- [x] Actual repository validation commands are included.
+- [x] Acceptance criteria are observable and mapped to requirements.
+- [x] Drift guards and scope exclusions are explicit.
+- [x] A less-capable implementing agent need not re-derive core architecture.
+- [x] Full reread is required before planning or starting each next phase.
