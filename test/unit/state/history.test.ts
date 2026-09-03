@@ -58,28 +58,28 @@ describe('createEntriesFromInputs', () => {
     ];
     const entries = createEntriesFromInputs(inputs);
     expect(entries).toHaveLength(2);
-    expect(entries[0].routeName).toBe('Home');
-    expect(entries[0].params).toEqual({ a: 1 });
-    expect(entries[1].routeName).toBe('Detail');
+    expect(entries[0]!.routeName).toBe('Home');
+    expect(entries[0]!.params).toEqual({ a: 1 });
+    expect(entries[1]!.routeName).toBe('Detail');
   });
 
   it('sets last entry state to active, others to inactive', () => {
     const inputs = [{ name: 'A' }, { name: 'B' }, { name: 'C' }];
     const entries = createEntriesFromInputs(inputs);
-    expect(entries[0].state).toBe('inactive');
-    expect(entries[1].state).toBe('inactive');
-    expect(entries[2].state).toBe('active');
+    expect(entries[0]!.state).toBe('inactive');
+    expect(entries[1]!.state).toBe('inactive');
+    expect(entries[2]!.state).toBe('active');
   });
 
   it('uses empty object when params is omitted', () => {
     const entries = createEntriesFromInputs([{ name: 'Home' }]);
-    expect(entries[0].params).toEqual({});
+    expect(entries[0]!.params).toEqual({});
   });
 
   it('assigns a unique non-empty key to each entry', () => {
     const entries = createEntriesFromInputs([{ name: 'A' }, { name: 'B' }]);
-    expect(entries[0].key).toBeTruthy();
-    expect(entries[1].key).toBeTruthy();
-    expect(entries[0].key).not.toBe(entries[1].key);
+    expect(entries[0]!.key).toBeTruthy();
+    expect(entries[1]!.key).toBeTruthy();
+    expect(entries[0]!.key).not.toBe(entries[1]!.key);
   });
 });

@@ -1,0 +1,201 @@
+name: Dependency Release
+
+# Uses pull_request_target only for merged-event metadata and GitHub API calls.
+# It must never check out or execute pull request code.
+on:
+  pull_request_target:
+    types:
+      - closed
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  create-release-pr:
+    name: Open dependency release PR
+    if: >-
+      ${{ github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'dev' &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/dev/npm-dependencies-') ||
+      startsWith(github.event.pull_request.head.ref, 'dependabot/github_actions/dev/github-actions-')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions: {}
+    concurrency:
+      group: dependency-release-branch-release/dependencies-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Create release automation token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RELEASE_AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.RELEASE_AUTOMATION_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Open draft release PR
+        env:
+          BRANCH: release/dependencies-${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          REPO: ${{ github.repository }}
+          SOURCE_PR: ${{ github.event.pull_request.html_url }}
+          SOURCE_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+
+          case "$HEAD_REF" in
+            dependabot/npm_and_yarn/dev/npm-dependencies-*)
+              ecosystem='npm'
+              group='npm-dependencies'
+              ;;
+            dependabot/github_actions/dev/github-actions-*)
+              ecosystem='github-actions'
+              group='github-actions'
+              ;;
+            *)
+              echo "Refusing an unrecognized Dependabot group branch: $HEAD_REF" >&2
+              exit 1
+              ;;
+          esac
+
+          # The promotion title mirrors the source scope so release classification is preserved.
+          case "$ecosystem ${SOURCE_TITLE%%:*}" in
+            'npm chore(deps)')
+              release_title='chore(deps): release dependency updates'
+              ;;
+            'npm chore(deps-dev)')
+              release_title='chore(deps-dev): release development dependency updates'
+              ;;
+            'github-actions ci(deps)')
+              release_title='ci(deps): release github actions updates'
+              ;;
+            *)
+              echo "Refusing $HEAD_REF because its title scope is not valid for the $ecosystem group: $SOURCE_TITLE" >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ ! "$MERGE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "Refusing to promote without a resolved merge commit." >&2
+            exit 1
+          fi
+
+          dev_status="$(gh api "repos/$REPO/compare/$MERGE_SHA...dev" --jq '.status')"
+          if [[ "$dev_status" != 'identical' && "$dev_status" != 'ahead' ]]; then
+            echo "Refusing to promote $MERGE_SHA because dev does not contain it ($dev_status)." >&2
+            exit 1
+          fi
+
+          main_status="$(gh api "repos/$REPO/compare/main...$MERGE_SHA" --jq '.status')"
+          if [[ "$main_status" == 'identical' || "$main_status" == 'behind' ]]; then
+            echo "main already contains $MERGE_SHA; there is nothing to promote."
+            exit 0
+          fi
+
+          refs="$(gh api "repos/$REPO/git/matching-refs/heads/$BRANCH")"
+          existing_sha="$(jq -r --arg ref "refs/heads/$BRANCH" \
+            '[.[] | select(.ref == $ref)][0].object.sha // empty' <<<"$refs")"
+          if [[ -n "$existing_sha" && "$existing_sha" != "$MERGE_SHA" ]]; then
+            echo "Refusing to reuse $BRANCH because it points at $existing_sha instead of $MERGE_SHA." >&2
+            exit 1
+          fi
+
+          owner="${REPO%%/*}"
+          matching_prs="$(gh api \
+            --method GET \
+            "repos/$REPO/pulls" \
+            -f state=open \
+            -f base=main \
+            -f head="$owner:$BRANCH")"
+          valid_pr_count="$(jq \
+            --arg repo "$REPO" \
+            --arg branch "$BRANCH" \
+            --arg sha "$MERGE_SHA" \
+            '[.[] | select(.head.repo.full_name == $repo and .head.ref == $branch and .head.sha == $sha)] | length' \
+            <<<"$matching_prs")"
+          if [[ "$valid_pr_count" -gt 0 ]]; then
+            echo "A promotion PR for $BRANCH at $MERGE_SHA already exists."
+            exit 0
+          fi
+
+          if [[ -z "$existing_sha" ]]; then
+            gh api \
+              --method POST \
+              "repos/$REPO/git/refs" \
+              -f ref="refs/heads/$BRANCH" \
+              -f sha="$MERGE_SHA" \
+              >/dev/null
+          fi
+
+          pr_url="$(gh pr create \
+            --repo "$REPO" \
+            --base main \
+            --head "$BRANCH" \
+            --draft \
+            --title "$release_title" \
+            --body "Promotes \`dev\` at \`$MERGE_SHA\`, the fixed snapshot taken when the \`$ecosystem\` \`$group\` updates in $SOURCE_PR merged.
+
+          This snapshot contains every commit on \`dev\` at that point, not only the dependency updates, and it does not follow later \`dev\` commits. Review the full diff, then mark it ready for review and merge it to release.")"
+          echo "Created $ecosystem promotion PR $pr_url from $BRANCH at $MERGE_SHA to main."
+
+  delete-release-branch:
+    name: Delete merged dependency release branch
+    if: >-
+      ${{ github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      startsWith(github.event.pull_request.head.ref, 'release/dependencies-') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    concurrency:
+      group: dependency-release-branch-${{ github.event.pull_request.head.ref }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Create release automation token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RELEASE_AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.RELEASE_AUTOMATION_PRIVATE_KEY }}
+          permission-contents: write
+
+      - name: Delete release branch
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$BRANCH" =~ ^release/dependencies-[0-9]+$ ]]; then
+            echo "Refusing to delete an unexpected branch: $BRANCH" >&2
+            exit 1
+          fi
+
+          refs="$(gh api "repos/$REPO/git/matching-refs/heads/$BRANCH")"
+          current_sha="$(jq -r --arg ref "refs/heads/$BRANCH" \
+            '[.[] | select(.ref == $ref)][0].object.sha // empty' <<<"$refs")"
+          if [[ -z "$current_sha" ]]; then
+            echo "Branch $BRANCH is already deleted."
+            exit 0
+          fi
+
+          if [[ "$current_sha" != "$HEAD_SHA" ]]; then
+            echo "Refusing to delete $BRANCH because it moved from $HEAD_SHA to $current_sha." >&2
+            exit 1
+          fi
+
+          gh api --method DELETE "repos/$REPO/git/refs/heads/$BRANCH"
+          echo "Deleted $BRANCH at $HEAD_SHA after its promotion PR merged."

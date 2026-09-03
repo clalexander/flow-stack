@@ -10,7 +10,11 @@ export default defineConfig({
         test: {
           name: 'unit-and-integration',
           environment: 'node',
-          include: ['test/unit/**/*.test.ts', 'test/integration/**/*.test.ts'],
+          include: [
+            'test/unit/**/*.test.ts',
+            'test/integration/**/*.test.ts',
+            'test/tooling/**/*.test.ts',
+          ],
         },
       },
       {
@@ -23,17 +27,6 @@ export default defineConfig({
             'test/integration/**/*.test.tsx',
           ],
           setupFiles: ['test/helpers/setup.ts'],
-        },
-      },
-      {
-        test: {
-          name: 'types',
-          include: ['test/types/**/*.test-d.ts'],
-          typecheck: {
-            enabled: true,
-            only: true,
-            include: ['test/types/**/*.test-d.ts'],
-          },
         },
       },
     ],

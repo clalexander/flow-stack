@@ -6,8 +6,7 @@ on:
     - cron: '0 12 1 * *'
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: react-major-support-watch
@@ -25,6 +24,7 @@ jobs:
         with:
           ref: dev
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -33,64 +33,114 @@ jobs:
 
       - name: Update React compatibility files
         id: update
-        run: node .github/scripts/update-react-major-support.mjs
+        run: node .github/scripts/update-react-major-support.ts
 
       - name: Stop if no newer React major exists
         if: ${{ steps.update.outputs.changed != 'true' }}
         run: echo "No newer React major support candidate found."
 
-      - name: Configure Git User
+      - name: Create release automation token
+        id: app-token
         if: ${{ steps.update.outputs.changed == 'true' }}
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.RELEASE_AUTOMATION_APP_ID }}
+          private-key: ${{ secrets.RELEASE_AUTOMATION_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
 
-      - name: Commit and push branch
-        if: ${{ steps.update.outputs.changed == 'true' }}
-        env:
-          BRANCH: automation/react-${{ steps.update.outputs.candidate-react-major }}-compatibility
-          CANDIDATE_REACT_MAJOR: ${{ steps.update.outputs.candidate-react-major }}
-        run: |
-          set -euo pipefail
-
-          git checkout -B "$BRANCH"
-          git add package.json README.md .github/workflows/ci.yml .github/workflows/release.yml
-
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
-
-          git commit -m "feat(react): add React ${CANDIDATE_REACT_MAJOR} compatibility candidate"
-          git push --force-with-lease origin "$BRANCH"
-
-      - name: Open pull request
+      - name: Create compatibility branch and pull request
         if: ${{ steps.update.outputs.changed == 'true' }}
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           BRANCH: automation/react-${{ steps.update.outputs.candidate-react-major }}-compatibility
           CANDIDATE_REACT_MAJOR: ${{ steps.update.outputs.candidate-react-major }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           LATEST_REACT_VERSION: ${{ steps.update.outputs.latest-react-version }}
+          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
 
-          if gh pr list \
-            --repo "$REPO" \
-            --base dev \
-            --head "$BRANCH" \
-            --state open \
-            --json number \
-            --jq 'length > 0' | grep -q true; then
-            echo "A React ${CANDIDATE_REACT_MAJOR} compatibility PR already exists."
+          if [[ ! "$CANDIDATE_REACT_MAJOR" =~ ^[0-9]+$ ]]; then
+            echo "Refusing an invalid React major: $CANDIDATE_REACT_MAJOR" >&2
+            exit 1
+          fi
+
+          base_sha="$(git rev-parse HEAD)"
+          remote_dev_sha="$(gh api "repos/$REPO/git/ref/heads/dev" --jq '.object.sha')"
+          if [[ "$base_sha" != "$remote_dev_sha" ]]; then
+            echo "Refusing to create $BRANCH because dev moved from $base_sha to $remote_dev_sha." >&2
+            exit 1
+          fi
+
+          git switch --create "$BRANCH" "$base_sha"
+          git add package.json README.md
+          if git diff --cached --quiet; then
+            echo "The updater reported a change but produced no staged compatibility files." >&2
+            exit 1
+          fi
+
+          git \
+            -c user.name="${APP_SLUG}[bot]" \
+            -c user.email="${APP_SLUG}[bot]@users.noreply.github.com" \
+            commit -m "feat(react): add React ${CANDIDATE_REACT_MAJOR} compatibility candidate"
+
+          generated_sha="$(git rev-parse HEAD)"
+          generated_tree="$(git rev-parse HEAD^{tree})"
+          refs="$(gh api "repos/$REPO/git/matching-refs/heads/$BRANCH")"
+          existing_sha="$(jq -r --arg ref "refs/heads/$BRANCH" \
+            '[.[] | select(.ref == $ref)][0].object.sha // empty' <<<"$refs")"
+
+          if [[ -n "$existing_sha" ]]; then
+            existing_commit="$(gh api "repos/$REPO/git/commits/$existing_sha")"
+            existing_parent="$(jq -r '.parents[0].sha // empty' <<<"$existing_commit")"
+            existing_tree="$(jq -r '.tree.sha' <<<"$existing_commit")"
+            if [[ "$existing_parent" != "$base_sha" || "$existing_tree" != "$generated_tree" ]]; then
+              echo "Refusing to overwrite $BRANCH at unexpected commit $existing_sha." >&2
+              exit 1
+            fi
+            branch_sha="$existing_sha"
+          else
+            gh api \
+              --method POST \
+              "repos/$REPO/git/refs" \
+              -f ref="refs/heads/$BRANCH" \
+              -f sha="$base_sha" \
+              >/dev/null
+
+            git_auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w 0)"
+            echo "::add-mask::$git_auth"
+            export GIT_CONFIG_COUNT=1
+            export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+            export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $git_auth"
+            git push origin "HEAD:refs/heads/$BRANCH"
+            branch_sha="$generated_sha"
+          fi
+
+          owner="${REPO%%/*}"
+          matching_prs="$(gh api \
+            --method GET \
+            "repos/$REPO/pulls" \
+            -f state=open \
+            -f base=dev \
+            -f head="$owner:$BRANCH")"
+          valid_pr_count="$(jq \
+            --arg repo "$REPO" \
+            --arg branch "$BRANCH" \
+            --arg sha "$branch_sha" \
+            '[.[] | select(.head.repo.full_name == $repo and .head.ref == $branch and .head.sha == $sha)] | length' \
+            <<<"$matching_prs")"
+          if [[ "$valid_pr_count" -gt 0 ]]; then
+            echo "React compatibility PR already exists for $BRANCH at $branch_sha."
             exit 0
           fi
 
-          gh pr create \
+          pr_url="$(gh pr create \
             --repo "$REPO" \
             --base dev \
             --head "$BRANCH" \
             --title "feat(react): add React ${CANDIDATE_REACT_MAJOR} compatibility candidate" \
-            --body "React ${LATEST_REACT_VERSION} is available on npm. This PR updates Flow Stack's peer dependency range and compatibility matrix to evaluate React ${CANDIDATE_REACT_MAJOR} support.
+            --body "React ${LATEST_REACT_VERSION} is available on npm. This PR updates Flow Stack's peer dependency range and compatibility documentation to evaluate React ${CANDIDATE_REACT_MAJOR} support.
 
-          Merge this only after the compatibility matrix passes and the public API/runtime behavior is verified."
+          Merge this only after the compatibility matrix passes and the public API/runtime behavior is verified.")"
+          echo "Created React compatibility PR $pr_url from $BRANCH at $branch_sha to dev."

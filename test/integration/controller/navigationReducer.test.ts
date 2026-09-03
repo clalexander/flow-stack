@@ -18,7 +18,7 @@ describe('navigationReducer', () => {
         route: 'Settings',
       });
       expect(next.entries).toHaveLength(3);
-      expect(next.entries[2].routeName).toBe('Settings');
+      expect(next.entries[2]!.routeName).toBe('Settings');
     });
 
     it('advances activeIndex to the new entry', () => {
@@ -49,21 +49,21 @@ describe('navigationReducer', () => {
         route: 'Settings',
       });
       expect(next.entries).toHaveLength(2);
-      expect(next.entries[1].routeName).toBe('Settings');
+      expect(next.entries[1]!.routeName).toBe('Settings');
     });
 
     it('keeps the same key for the replaced entry', () => {
       const s = state2();
-      const originalKey = s.entries[1].key;
+      const originalKey = s.entries[1]!.key;
       const next = navigationReducer(s, { type: 'replace', route: 'Settings' });
-      expect(next.entries[1].key).toBe(originalKey);
+      expect(next.entries[1]!.key).toBe(originalKey);
     });
 
     it('handles replace on empty stack', () => {
       const empty = activeStackState([], -1);
       const next = navigationReducer(empty, { type: 'replace', route: 'Home' });
       expect(next.entries).toHaveLength(1);
-      expect(next.entries[0].routeName).toBe('Home');
+      expect(next.entries[0]!.routeName).toBe('Home');
     });
   });
 
@@ -71,7 +71,7 @@ describe('navigationReducer', () => {
     it('removes the top entry', () => {
       const next = navigationReducer(state2(), { type: 'pop' });
       expect(next.entries).toHaveLength(1);
-      expect(next.entries[0].routeName).toBe('Home');
+      expect(next.entries[0]!.routeName).toBe('Home');
     });
 
     it('decrements activeIndex', () => {
@@ -93,7 +93,7 @@ describe('navigationReducer', () => {
       ]);
       const next = navigationReducer(s, { type: 'pop', count: 2 });
       expect(next.entries).toHaveLength(1);
-      expect(next.entries[0].routeName).toBe('A');
+      expect(next.entries[0]!.routeName).toBe('A');
     });
   });
 
@@ -106,7 +106,7 @@ describe('navigationReducer', () => {
       ]);
       const next = navigationReducer(s, { type: 'popToRoot' });
       expect(next.entries).toHaveLength(1);
-      expect(next.entries[0].routeName).toBe('Home');
+      expect(next.entries[0]!.routeName).toBe('Home');
       expect(next.activeIndex).toBe(0);
     });
 
@@ -149,8 +149,8 @@ describe('navigationReducer', () => {
         entries: [{ name: 'X' }, { name: 'Y' }],
       });
       expect(next.entries).toHaveLength(2);
-      expect(next.entries[0].routeName).toBe('X');
-      expect(next.entries[1].routeName).toBe('Y');
+      expect(next.entries[0]!.routeName).toBe('X');
+      expect(next.entries[1]!.routeName).toBe('Y');
     });
 
     it('sets activeIndex to last entry', () => {
@@ -171,7 +171,7 @@ describe('navigationReducer', () => {
         type: 'setParams',
         params: { a: 99, b: 2 },
       });
-      expect(next.entries[0].params).toEqual({ a: 99, b: 2 });
+      expect(next.entries[0]!.params).toEqual({ a: 99, b: 2 });
     });
 
     it('is a no-op when no active entry', () => {
@@ -187,13 +187,13 @@ describe('navigationReducer', () => {
   describe('updateEntry', () => {
     it('applies the updater to the matching entry', () => {
       const s = state2();
-      const key = s.entries[0].key;
+      const key = s.entries[0]!.key;
       const next = navigationReducer(s, {
         type: 'updateEntry',
         entryKey: key,
         updater: (e) => ({ ...e, params: { updated: true } }),
       });
-      expect(next.entries[0].params).toEqual({ updated: true });
+      expect(next.entries[0]!.params).toEqual({ updated: true });
     });
 
     it('returns unchanged state when key not found', () => {
@@ -224,16 +224,16 @@ describe('navigationReducer', () => {
   describe('entry state normalization', () => {
     it('active entry has state "active" after push', () => {
       const next = navigationReducer(state2(), { type: 'push', route: 'X' });
-      expect(next.entries[next.activeIndex].state).toBe('active');
+      expect(next.entries[next.activeIndex]!.state).toBe('active');
     });
 
     it('previous entries have state "inactive" after push', () => {
       const next = navigationReducer(state2(), { type: 'push', route: 'X' });
       // entries[0] (Home) was already inactive before push; normalizeEntries preserves it
-      expect(next.entries[0].state).toBe('inactive');
+      expect(next.entries[0]!.state).toBe('inactive');
       // entries[1] (Detail) was the active entry; normalizeEntries(state.entries, state.activeIndex=1)
       // keeps it 'active' so it remains visible during the outgoing transition
-      expect(next.entries[1].state).toBe('active');
+      expect(next.entries[1]!.state).toBe('active');
     });
   });
 });

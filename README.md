@@ -97,6 +97,8 @@ Examples coming soon. In the meantime, see the [Quick start](#quick-start) above
 
 Deeper documentation (transitions, controlled mode, accessibility, headless controller) is in progress. Questions and requests are welcome on the [GitHub issues page](https://github.com/clalexander/flow-stack/issues).
 
+Contributor and maintainer documentation lives in [`docs/`](./docs/README.md).
+
 ## API summary
 
 **Components**

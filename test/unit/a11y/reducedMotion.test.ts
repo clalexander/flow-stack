@@ -43,14 +43,14 @@ describe('resolveReducedMotionPreference', () => {
 
   it('"system" returns false when matchMedia does not match', () => {
     (
-      globalThis as unknown as Record<string, (v: boolean) => void>
+      globalThis as unknown as { __setMatchMedia: (v: boolean) => void }
     ).__setMatchMedia(false);
     expect(resolveReducedMotionPreference('system')).toBe(false);
   });
 
   it('"system" returns true when matchMedia matches', () => {
     (
-      globalThis as unknown as Record<string, (v: boolean) => void>
+      globalThis as unknown as { __setMatchMedia: (v: boolean) => void }
     ).__setMatchMedia(true);
     expect(resolveReducedMotionPreference('system')).toBe(true);
   });

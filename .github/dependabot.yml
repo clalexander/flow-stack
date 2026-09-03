@@ -7,9 +7,15 @@ updates:
       interval: weekly
       day: monday
       time: '06:00'
-      timezone: America/Chicago
-    open-pull-requests-limit: 10
+      timezone: America/New_York
+    cooldown:
+      default-days: 3
+      semver-major-days: 7
+      semver-minor-days: 3
+      semver-patch-days: 2
+    open-pull-requests-limit: 1
     target-branch: dev
+    # Dependabot scopes dev-only groups as chore(deps-dev), which intentionally does not release.
     commit-message:
       prefix: chore
       include: scope
@@ -17,26 +23,11 @@ updates:
       - dependencies
       - automated
     groups:
-      production-minor-patch-dependencies:
-        dependency-type: production
-        update-types:
-          - minor
-          - patch
-        exclude-patterns:
-          - react
-          - react-dom
+      npm-dependencies:
+        patterns:
+          - '*'
 
-      development-minor-patch-dependencies:
-        dependency-type: development
-        update-types:
-          - minor
-          - patch
-        exclude-patterns:
-          - react
-          - react-dom
-          - '@types/react'
-          - '@types/react-dom'
-
+    # React major upgrades are owned by the React compatibility watcher.
     ignore:
       - dependency-name: react
         update-types:
@@ -50,6 +41,17 @@ updates:
       - dependency-name: '@types/react-dom'
         update-types:
           - version-update:semver-major
+      # Remove once eslint-plugin-react and eslint-plugin-jsx-a11y support ESLint 10.
+      - dependency-name: '@eslint/js'
+        versions:
+          - '>=10.0.0'
+      - dependency-name: eslint
+        versions:
+          - '>=10.0.0'
+      # Remove once typescript-eslint supports TypeScript >=6.1.0.
+      - dependency-name: typescript
+        versions:
+          - '>=6.1.0'
 
   - package-ecosystem: github-actions
     directory: /
@@ -57,8 +59,8 @@ updates:
       interval: weekly
       day: monday
       time: '06:30'
-      timezone: America/Chicago
-    open-pull-requests-limit: 10
+      timezone: America/New_York
+    open-pull-requests-limit: 1
     target-branch: dev
     commit-message:
       prefix: ci
@@ -67,3 +69,7 @@ updates:
       - dependencies
       - github-actions
       - automated
+    groups:
+      github-actions:
+        patterns:
+          - '*'

@@ -63,11 +63,11 @@ Typical commands:
 ```bash
 corepack enable
 pnpm install
-pnpm run format
-pnpm run lint
-pnpm run typecheck
-pnpm run test
 pnpm run build
+pnpm run typecheck
+pnpm test
+pnpm run lint
+pnpm run format:check
 ```
 
 ## Repository Conventions
@@ -88,13 +88,18 @@ We separate formatting from linting:
 - Prettier handles formatting.
 - ESLint handles code quality and rule-based issues.
 
-Before opening a pull request, run:
+Before opening a pull request, run the reporting commands, which are the same ones continuous integration runs:
 
 ```bash
-pnpm run format
 pnpm run lint
-pnpm run typecheck
-pnpm run test
+pnpm run format:check
+```
+
+To apply fixes instead of reporting them:
+
+```bash
+pnpm run lint:fix
+pnpm run format
 ```
 
 ## Tests
@@ -116,9 +121,11 @@ When fixing a bug, prefer adding a test that fails before the fix and passes aft
 Please update documentation when relevant. This includes:
 
 - `README.md`
+- project documentation under [`docs/`](./docs/README.md)
 - API documentation
 - examples
-- migration or release notes for notable behavior changes
+
+Release notes are generated from commit subjects, so no manual changelog entry is needed.
 
 A contribution is not complete if users would need new behavior explained and the documentation was left behind.
 
@@ -134,6 +141,7 @@ A contribution is not complete if users would need new behavior explained and th
 
 A good pull request should:
 
+- use a conventional title, because it becomes the squashed commit subject
 - explain what changed
 - explain why it changed
 - reference any related issue
@@ -144,24 +152,29 @@ Please keep pull requests reviewable. If a change is large, break it into smalle
 
 ## Commit Guidance
 
-Write commit messages that are clear and descriptive. A commit should communicate intent, not just activity.
+This repository squash merges pull requests, so the pull request title becomes the commit subject on the target branch. Release automation reads those subjects, which makes the title part of the change rather than a label.
+
+Use [Conventional Commits](https://www.conventionalcommits.org/). A title is `type(optional scope): subject`, where the subject starts with a lowercase letter.
 
 Good examples:
 
-- `Add stack transition state guards`
-- `Fix navigation index underflow`
-- `Document controlled container usage`
+- `feat: add stack transition state guards`
+- `fix: correct navigation index underflow`
+- `docs: document controlled container usage`
+
+Allowed types are `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, and `test`. A pull request title is validated automatically.
+
+Which types publish a release is documented in [release operations](./docs/development/release.md). In short, `feat` produces a minor release, `fix` and `perf` produce a patch, a `BREAKING CHANGE:` footer produces a major, and most other types publish nothing.
 
 ## Release Expectations
 
-Releases are cut from `main`, with work integrated through `dev` first. Release branches should focus on release preparation only, such as:
+Releases are automated. When a change merges to `main`, semantic-release determines the version from commit subjects, publishes to npm, writes `CHANGELOG.md`, updates the version in `package.json`, tags the commit, and creates the GitHub release.
 
-- version updates
-- changelog updates
-- final documentation adjustments
-- release validation
+Because those artifacts are generated, do not edit the package version or changelog by hand in a pull request.
 
-Avoid mixing new feature work into a release branch.
+Work still integrates through `dev` before reaching `main`, and release branches should carry only release preparation and validation. Avoid mixing new feature work into a release branch.
+
+The full release path, including prerequisites, recovery, and rollback, is documented in [release operations](./docs/development/release.md).
 
 ## Hotfix Process
 
