@@ -1,10 +1,10 @@
 # Flow Stack CI Modernization Architecture and Implementation Plan
 
-> Status: AWAITING ACCEPTANCE
+> Status: IN PROGRESS
 >
 > Plan version: 5.2
 >
-> Revision: 20
+> Revision: 22
 >
 > Last updated: 2026-09-03
 >
@@ -18,9 +18,9 @@
 >
 > Canonical location: `docs/development/flow-stack-ci-modernization-plan.md`
 >
-> Current phase: Phase 4
+> Current phase: Phase 5
 >
-> Implementation authorization: Phase 4 granted on 2026-09-02 (`Phase 3 accepted. Proceed with phase 4`)
+> Implementation authorization: Phase 5 granted on 2026-09-03 (`Phase 4 accepted. Proceed with phase 5`)
 >
 > Supersedes: None
 
@@ -165,16 +165,18 @@ An ignored `package-lock.json` exists locally but is not authoritative. `pnpm-lo
 | 18       | 5.1          | 2026-09-02 | AWAITING ACCEPTANCE | Closed Phase 4 implementation, correcting Dependabot branch-name and release-scope assumptions against observed repository evidence and hardening promotion containment, concurrency, and token scope.           | Phase 4 closeout                          |
 | 19       | 5.2          | 2026-09-03 | AWAITING ACCEPTANCE | Accepted that development-only npm groups stay `chore(deps-dev)` and do not release, aligned DR-005/DEC-006/step 4.1/acceptance, recorded pnpm 10 `updateConfig` holds, and opened the Node 20 support question. | User direction                            |
 | 20       | 5.2          | 2026-09-03 | AWAITING ACCEPTANCE | Extended the P4-T001 compatibility holds so React, React DOM, and their type packages are ignored by bare `pnpm update`, matching the Dependabot major ignores that reserve React majors for the watcher.        | User direction                            |
+| 21       | 5.2          | 2026-09-03 | IN PROGRESS         | Recorded Phase 4 acceptance and Phase 5 authorization, and activated documentation, contributor-alignment, ruleset, and final-proof tasks P5-T001 through P5-T004.                                               | User authorization and Phase 5 start      |
+| 22       | 5.2          | 2026-09-03 | IN PROGRESS         | Completed P5-T001 and P5-T002 by adding the `docs/` knowledge base with CI and release runbooks and aligning contributor guidance with conventional squash titles and generated release artifacts.               | Phase 5 implementation checkpoint         |
 
 ## Phase Status
 
-| Phase | Conceptual Boundary                                                | Status              | Backlog Progress                 | Authorization       | Acceptance          | Revision |
-| ----- | ------------------------------------------------------------------ | ------------------- | -------------------------------- | ------------------- | ------------------- | -------- |
-| 1     | Canonical verification and React compatibility                     | COMPLETE            | 5 / 5 complete                   | Received 2026-09-02 | Received 2026-09-02 | 9        |
-| 2     | Supply-chain validation and action normalization                   | COMPLETE            | 2 / 2 active complete; 2 removed | Received 2026-09-02 | Received 2026-09-02 | 14       |
-| 3     | Credentialed release and generated-PR automation                   | COMPLETE            | 5 / 5 complete                   | Received 2026-09-02 | Received 2026-09-02 | 17       |
-| 4     | Dependabot grouping, promotion, and policy                         | AWAITING ACCEPTANCE | 4 / 4 complete                   | Received 2026-09-02 | Not received        | 20       |
-| 5     | Branch enforcement, operations documentation, and end-to-end proof | NOT STARTED         | 0 / 4 complete                   | Not received        | Not received        | 2        |
+| Phase | Conceptual Boundary                                                | Status      | Backlog Progress                 | Authorization       | Acceptance          | Revision |
+| ----- | ------------------------------------------------------------------ | ----------- | -------------------------------- | ------------------- | ------------------- | -------- |
+| 1     | Canonical verification and React compatibility                     | COMPLETE    | 5 / 5 complete                   | Received 2026-09-02 | Received 2026-09-02 | 9        |
+| 2     | Supply-chain validation and action normalization                   | COMPLETE    | 2 / 2 active complete; 2 removed | Received 2026-09-02 | Received 2026-09-02 | 14       |
+| 3     | Credentialed release and generated-PR automation                   | COMPLETE    | 5 / 5 complete                   | Received 2026-09-02 | Received 2026-09-02 | 17       |
+| 4     | Dependabot grouping, promotion, and policy                         | COMPLETE    | 4 / 4 complete                   | Received 2026-09-02 | Received 2026-09-03 | 21       |
+| 5     | Branch enforcement, operations documentation, and end-to-end proof | IN PROGRESS | 2 / 4 complete                   | Received 2026-09-03 | Not received        | 22       |
 
 ## Requirement Sources
 
@@ -1137,7 +1139,7 @@ Consolidate routine updates into one npm PR and one GitHub Actions PR, then prom
 
 ### Status and Gate
 
-- Status: AWAITING ACCEPTANCE
+- Status: COMPLETE
 - Start requires: Phase 3 accepted and `Authorize Phase 4.`
 - Exit requires: event/filter evidence and explicit user acceptance
 - Mandatory stop: request Phase 5 authorization
@@ -1262,7 +1264,7 @@ Make repository policy enforce the verified workflow contracts, document operati
 
 ### Status and Gate
 
-- Status: NOT STARTED
+- Status: IN PROGRESS
 - Start requires: Phase 4 accepted and `Authorize Phase 5.`
 - A real npm release requires separate explicit authorization at the point of execution.
 - Exit requires: all initiative acceptance criteria and explicit final acceptance
@@ -1281,8 +1283,8 @@ SR-008, OR-002, PR-003, FR-006, all acceptance criteria
 
 | Task ID | Task                                                         | Requirements    | Detailed Step | Dependencies    | Deliverable                  | Verification              | Status      |
 | ------- | ------------------------------------------------------------ | --------------- | ------------- | --------------- | ---------------------------- | ------------------------- | ----------- |
-| P5-T001 | Write release and CI operations documentation                | OR-002, PR-003  | 5.1           | Prior phases    | Durable runbooks             | Documentation review      | NOT STARTED |
-| P5-T002 | Align contributor/PR guidance                                | FR-006, ASM-001 | 5.2           | P5-T001         | Conventional/squash guidance | Documentation review      | NOT STARTED |
+| P5-T001 | Write release and CI operations documentation                | OR-002, PR-003  | 5.1           | Prior phases    | Durable runbooks             | Documentation review      | COMPLETE    |
+| P5-T002 | Align contributor/PR guidance                                | FR-006, ASM-001 | 5.2           | P5-T001         | Conventional/squash guidance | Documentation review      | COMPLETE    |
 | P5-T003 | Configure and test branch rulesets                           | SR-008          | 5.3           | Stable checks   | M-004 evidence               | Controlled rules tests    | NOT STARTED |
 | P5-T004 | Execute final verification and controlled release acceptance | All             | 5.4           | P5-T001-P5-T003 | M-005 and final closeout     | Full command/run evidence | NOT STARTED |
 
@@ -1467,10 +1469,10 @@ The initiative is complete only when:
 ## Handoff to Implementing Agent
 
 - Canonical plan: `docs/development/flow-stack-ci-modernization-plan.md`
-- Authorized phase: Phase 4
-- Plan version/revision: 5.2/20
+- Authorized phase: Phase 5
+- Plan version/revision: 5.2/22
 - Baseline commit: `525e8d7817b205d39b33f37b938655a1a8cad775`
 - Mandatory first action: Read the canonical plan in full.
-- Active phase backlog: None; Phase 4 is awaiting hosted evidence and acceptance
-- Stop condition: Record hosted Phase 4 evidence, then request acceptance and explicit Phase 5 authorization.
+- Active phase backlog: P5-T003 and P5-T004; P5-T001 and P5-T002 are complete
+- Stop condition: P5-T003 requires the user to complete M-004 before ruleset behavior can be tested, and P5-T004 requires hosted evidence plus separate authorization for a real release.
 - Prohibited action: Do not plan or begin the next phase without rereading this plan and receiving authorization.
