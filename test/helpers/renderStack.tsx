@@ -1,9 +1,7 @@
 import { render, act } from '@testing-library/react';
-import type { ReactElement } from 'react';
 
 import { NavigationStackProvider } from '../../src/components/NavigationStackProvider';
 import { NavigationStackViewport } from '../../src/components/NavigationStackViewport';
-import type { NavigationStackController } from '../../src/controller/NavigationStackController';
 import type {
   NavigationStackState,
   NavigationStackId,
@@ -24,7 +22,6 @@ export interface RenderStackOptions {
 
 export interface RenderStackResult {
   container: HTMLElement;
-  getController: () => NavigationStackController;
   unmount: () => void;
 }
 
@@ -33,14 +30,6 @@ export function renderStack(
   options: RenderStackOptions = {},
 ): RenderStackResult {
   const stackId = options.stackId ?? 'test-stack';
-
-  const controllerRef: NavigationStackController | null = null;
-
-  function ControllerCapture(): ReactElement | null {
-    // Capture controller via context lazily in tests rather than a ref in render
-    return null;
-  }
-  void ControllerCapture;
 
   const baseProps = {
     id: stackId,
@@ -78,12 +67,6 @@ export function renderStack(
 
   return {
     container,
-    getController: () => {
-      if (!controllerRef) {
-        throw new Error('Controller not captured yet');
-      }
-      return controllerRef;
-    },
     unmount,
   };
 }

@@ -94,7 +94,7 @@ const missingOnChange: NavigationStackProviderProps = {
   id: 'x',
   state: validState,
 };
-void missingOnChange;
+expectTypeOf(missingOnChange).toExtend<NavigationStackProviderProps>();
 
 // ---------------------------------------------------------------------------
 // Uncontrolled provider — must not accept state or onStateChange
