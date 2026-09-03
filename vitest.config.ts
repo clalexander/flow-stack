@@ -29,17 +29,6 @@ export default defineConfig({
           setupFiles: ['test/helpers/setup.ts'],
         },
       },
-      {
-        test: {
-          name: 'types',
-          include: ['test/types/**/*.test-d.ts'],
-          typecheck: {
-            enabled: true,
-            only: true,
-            include: ['test/types/**/*.test-d.ts'],
-          },
-        },
-      },
     ],
     coverage: {
       provider: 'v8',

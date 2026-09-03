@@ -5,7 +5,15 @@ import { runNavigationGuards } from '../../../src/state/guards';
 import { makeEntry, activeStackState } from '../../fixtures/entries';
 import { simpleRegistry } from '../../fixtures/routes';
 
-const routes = normalizeRouteRegistry(simpleRegistry);
+const registry = normalizeRouteRegistry(simpleRegistry);
+const homeRoute = registry['Home'];
+const detailRoute = registry['Detail'];
+
+if (!homeRoute || !detailRoute) {
+  throw new Error('The simple registry must define Home and Detail routes.');
+}
+
+const routes = { Detail: detailRoute, Home: homeRoute };
 const action = { type: 'push' as const, route: 'Detail' };
 
 function makeState() {
@@ -17,8 +25,8 @@ describe('runNavigationGuards', () => {
     const result = await runNavigationGuards({
       action,
       currentState: makeState(),
-      currentRoute: routes['Home'],
-      nextRoute: routes['Detail'],
+      currentRoute: routes.Home,
+      nextRoute: routes.Detail,
     });
     expect(result).toBe(true);
   });
@@ -28,7 +36,7 @@ describe('runNavigationGuards', () => {
     const result = await runNavigationGuards({
       action,
       currentState: makeState(),
-      currentRoute: { ...routes['Home'], canLeave },
+      currentRoute: { ...routes.Home, canLeave },
     });
     expect(result).toBe(true);
     expect(canLeave).toHaveBeenCalled();
@@ -39,7 +47,7 @@ describe('runNavigationGuards', () => {
     const result = await runNavigationGuards({
       action,
       currentState: makeState(),
-      currentRoute: { ...routes['Home'], canLeave },
+      currentRoute: { ...routes.Home, canLeave },
     });
     expect(result).toBe(false);
   });
@@ -49,7 +57,7 @@ describe('runNavigationGuards', () => {
     const result = await runNavigationGuards({
       action,
       currentState: makeState(),
-      nextRoute: { ...routes['Detail'], canEnter },
+      nextRoute: { ...routes.Detail, canEnter },
     });
     expect(result).toBe(true);
   });
@@ -59,7 +67,7 @@ describe('runNavigationGuards', () => {
     const result = await runNavigationGuards({
       action,
       currentState: makeState(),
-      nextRoute: { ...routes['Detail'], canEnter },
+      nextRoute: { ...routes.Detail, canEnter },
     });
     expect(result).toBe(false);
   });
@@ -70,8 +78,8 @@ describe('runNavigationGuards', () => {
     const result = await runNavigationGuards({
       action,
       currentState: makeState(),
-      currentRoute: { ...routes['Home'], canLeave },
-      nextRoute: { ...routes['Detail'], canEnter },
+      currentRoute: { ...routes.Home, canLeave },
+      nextRoute: { ...routes.Detail, canEnter },
     });
     expect(result).toBe(false);
     expect(canEnter).not.toHaveBeenCalled();
@@ -82,7 +90,7 @@ describe('runNavigationGuards', () => {
     const result = await runNavigationGuards({
       action,
       currentState: makeState(),
-      nextRoute: { ...routes['Detail'], canEnter },
+      nextRoute: { ...routes.Detail, canEnter },
     });
     expect(result).toBe(true);
   });
@@ -92,7 +100,7 @@ describe('runNavigationGuards', () => {
     const result = await runNavigationGuards({
       action,
       currentState: makeState(),
-      nextRoute: { ...routes['Detail'], canEnter },
+      nextRoute: { ...routes.Detail, canEnter },
     });
     expect(result).toBe(false);
   });

@@ -34,8 +34,8 @@ describe('normalizeRouteRegistry', () => {
   describe('object input', () => {
     it('clones the object into a normalized registry', () => {
       const obj = {
-        Home: simpleRegistry[0],
-        Detail: simpleRegistry[1],
+        Home: simpleRegistry[0]!,
+        Detail: simpleRegistry[1]!,
       };
       const result = normalizeRouteRegistry(obj);
       expect(result['Home']).toBe(obj.Home);
@@ -43,7 +43,7 @@ describe('normalizeRouteRegistry', () => {
     });
 
     it('returns the same keys as the input object', () => {
-      const obj = { Settings: simpleRegistry[2] };
+      const obj = { Settings: simpleRegistry[2]! };
       const result = normalizeRouteRegistry(obj);
       expect(Object.keys(result)).toEqual(['Settings']);
     });

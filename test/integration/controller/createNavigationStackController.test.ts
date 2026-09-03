@@ -16,7 +16,7 @@ describe('createNavigationStackController', () => {
     it('starts with the initial route', () => {
       const c = makeController();
       expect(c.entries).toHaveLength(1);
-      expect(c.entries[0].routeName).toBe('Home');
+      expect(c.entries[0]!.routeName).toBe('Home');
     });
 
     it('activeIndex is 0', () => {
@@ -50,7 +50,7 @@ describe('createNavigationStackController', () => {
       const c = makeController();
       c.push('Detail');
       expect(c.entries).toHaveLength(2);
-      expect(c.entries[1].routeName).toBe('Detail');
+      expect(c.entries[1]!.routeName).toBe('Detail');
       expect(c.state.activeIndex).toBe(1);
     });
 
@@ -81,7 +81,7 @@ describe('createNavigationStackController', () => {
       const c = makeController();
       c.replace('Detail');
       expect(c.entries).toHaveLength(1);
-      expect(c.entries[0].routeName).toBe('Detail');
+      expect(c.entries[0]!.routeName).toBe('Detail');
     });
 
     it('does not increase depth', () => {

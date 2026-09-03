@@ -22,29 +22,29 @@ const peerRangePattern = /^>=(\d+) <(\d+)$/;
 const compatibilityPattern = /Requires React and React DOM ([^.]+)\./g;
 
 function getMajor(version: string): number {
-  const match = /^(\d+)\./.exec(version);
+  const major = /^(\d+)\./.exec(version)?.[1];
 
-  if (!match) {
+  if (major === undefined) {
     throw new Error(`Could not parse React major from "${version}".`);
   }
 
-  return Number.parseInt(match[1], 10);
+  return Number.parseInt(major, 10);
 }
 
 function parsePeerRange(peerRange: string): {
   exclusiveMaximumMajor: number;
   minimumMajor: number;
 } {
-  const match = peerRangePattern.exec(peerRange);
+  const [, minimum, exclusiveMaximum] = peerRangePattern.exec(peerRange) ?? [];
 
-  if (!match) {
+  if (minimum === undefined || exclusiveMaximum === undefined) {
     throw new Error(
       `Expected a contiguous React peer range like ">=18 <20", received "${peerRange}".`,
     );
   }
 
-  const minimumMajor = Number.parseInt(match[1], 10);
-  const exclusiveMaximumMajor = Number.parseInt(match[2], 10);
+  const minimumMajor = Number.parseInt(minimum, 10);
+  const exclusiveMaximumMajor = Number.parseInt(exclusiveMaximum, 10);
 
   if (exclusiveMaximumMajor <= minimumMajor) {
     throw new Error(
@@ -66,15 +66,21 @@ function getMajorRange(
 }
 
 function formatCompatibility(majors: string[]): string {
-  if (majors.length === 1) {
-    return majors[0];
+  const [first, ...rest] = majors;
+
+  if (first === undefined) {
+    throw new Error('Expected at least one supported React major.');
   }
 
-  if (majors.length === 2) {
-    return `${majors[0]} or ${majors[1]}`;
+  const last = rest.pop();
+
+  if (last === undefined) {
+    return first;
   }
 
-  return `${majors.slice(0, -1).join(', ')}, or ${majors[majors.length - 1]}`;
+  return rest.length === 0
+    ? `${first} or ${last}`
+    : `${[first, ...rest].join(', ')}, or ${last}`;
 }
 
 export function getSupportedReactMajors(
@@ -108,10 +114,13 @@ export function createReactMajorUpdate<
   }
 
   const supportedMajors = getSupportedReactMajors(reactRange, reactDomRange);
-  const maximumSupportedMajor = Number.parseInt(
-    supportedMajors[supportedMajors.length - 1],
-    10,
-  );
+  const highestSupportedMajor = supportedMajors[supportedMajors.length - 1];
+
+  if (highestSupportedMajor === undefined) {
+    throw new Error('The React peer range produced no supported majors.');
+  }
+
+  const maximumSupportedMajor = Number.parseInt(highestSupportedMajor, 10);
   const latestMajor = getMajor(latestVersion);
 
   if (latestMajor <= maximumSupportedMajor) {
