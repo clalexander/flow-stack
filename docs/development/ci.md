@@ -70,7 +70,7 @@ The npm group keeps Dependabot's own scope. A group containing a production depe
 Compatibility holds live in two places and mean different things:
 
 - `.github/dependabot.yml` ignores React majors and specific unsupported version ranges. These entries support version bounds.
-- `pnpm-workspace.yaml` lists package names under `updateConfig.ignoreDependencies`. These entries have no version granularity and apply only to a bare `pnpm update`.
+- `pnpm-workspace.yaml` lists package names under `update.ignoreDeps`. These entries have no version granularity and apply only to a bare `pnpm update`.
 
 Dependabot reads `.github/dependabot.yml` from the default branch. Changes to grouping take effect only after they land there.
 

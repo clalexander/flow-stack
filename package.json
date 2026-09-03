@@ -45,10 +45,9 @@
     "dist",
     "CHANGELOG.md"
   ],
-  "packageManager": "pnpm@10.34.4",
+  "packageManager": "pnpm@12.3.1",
   "engines": {
-    "node": ">=20.19.0",
-    "pnpm": ">=10.0.0 <11"
+    "node": ">=22.12.0"
   },
   "sideEffects": false,
   "scripts": {

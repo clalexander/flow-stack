@@ -10,7 +10,7 @@ Operational documentation for building, verifying, and releasing Flow Stack.
 
 ## Toolchain
 
-- Node: `engines.node` is `>=20.19.0`, and continuous integration verifies Node 20, 22, and 24.
+- Node: `engines.node` is `>=22.12.0`, and continuous integration verifies Node 22 and 24.
 - pnpm: pinned by `packageManager`. Use `corepack enable` rather than installing pnpm globally.
 - `pnpm-lock.yaml` is the authoritative lockfile. An ignored `package-lock.json` may exist locally and is not used.
 
@@ -35,4 +35,4 @@ pnpm run format
 
 ## Dependency Updates
 
-`pnpm-workspace.yaml` holds compatibility pins through `updateConfig.ignoreDependencies`. That list suppresses packages only during a bare `pnpm update`; naming a package explicitly, such as `pnpm update react`, still updates it. React majors are owned by the React compatibility watcher described in [ci.md](./ci.md).
+`pnpm-workspace.yaml` holds compatibility pins through `update.ignoreDeps`. That list suppresses packages only during a bare `pnpm update`; naming a package explicitly, such as `pnpm update react`, still updates it. React majors are owned by the React compatibility watcher described in [ci.md](./ci.md).
