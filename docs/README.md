@@ -7,7 +7,7 @@ This is the canonical documentation for the Flow Stack repository. It is written
 - [Development](./development/README.md)
 - [Continuous integration](./development/ci.md)
 - [Release operations](./development/release.md)
-- [CI modernization plan](./development/flow-stack-ci-modernization-plan.md)
+- [CI modernization plan](./plans/flow-stack-ci-modernization-plan.md)
 
 Consumer-facing usage and the public API live in the root [README](../README.md). The contribution workflow lives in [CONTRIBUTING](../CONTRIBUTING.md).
 
@@ -23,5 +23,6 @@ Before making a non-trivial change:
 ## Documentation Areas
 
 - `development/`: verification, dependency automation, and release operations.
+- `plans/`: historical records of completed plans, kept for context rather than as current instructions.
 
 Other areas are added only when they carry real content.

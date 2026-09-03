@@ -1,14 +1,14 @@
 # Flow Stack CI Modernization Architecture and Implementation Plan
 
-> Status: IN PROGRESS
+> Status: COMPLETE
 >
 > Plan version: 5.2
 >
-> Revision: 22
+> Revision: 23
 >
 > Last updated: 2026-09-03
 >
-> Repository/workspace: `flow-stack` in the `Self` workspace root
+> Repository: `clalexander/flow-stack`
 >
 > Branch: `ci/update`
 >
@@ -16,9 +16,9 @@
 >
 > Working tree: Clean at planning baseline
 >
-> Canonical location: `docs/development/flow-stack-ci-modernization-plan.md`
+> Canonical location: `docs/plans/flow-stack-ci-modernization-plan.md`
 >
-> Current phase: Phase 5
+> Current phase: None; all phases are accepted
 >
 > Implementation authorization: Phase 5 granted on 2026-09-03 (`Phase 4 accepted. Proceed with phase 5`)
 >
@@ -26,7 +26,7 @@
 
 ## Purpose
 
-This plan governs modernization of Flow Stack's GitHub CI, dependency automation, React compatibility automation, and public npm release workflow. It adapts applicable controls from the Synaptech `npm-packages` repository while preserving Flow Stack's single-package semantic-release model, public npm publishing target, and Node/React compatibility promises.
+This plan governs modernization of Flow Stack's GitHub CI, dependency automation, React compatibility automation, and public npm release workflow. It adapts applicable controls from an internal reference monorepo while preserving Flow Stack's single-package semantic-release model, public npm publishing target, and Node/React compatibility promises.
 
 The durable outcome is a release path in which the exact commit published to npm passes one authoritative verification workflow, automated pull requests trigger normal protections, repository mutations use short-lived least-privilege credentials, and manual GitHub/npm configuration is documented and testable.
 
@@ -36,7 +36,7 @@ The durable outcome is a release path in which the exact commit published to npm
 
 ### Intent
 
-Make Flow Stack's automation reliable, secure, understandable, and maintainable without importing monorepo- or AWS-specific machinery from `npm-packages`.
+Make Flow Stack's automation reliable, secure, understandable, and maintainable without importing monorepo- or AWS-specific machinery from that reference repository.
 
 ### Goals
 
@@ -129,13 +129,13 @@ Unambiguous authorization examples:
 
 | Field                          | Value                                                                                   | Evidence                                                                          |
 | ------------------------------ | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Repository root                | `C:\Users\clale\Projects\Work\Self\flow-stack`                                          | Workspace inspection                                                              |
+| Repository root                | Local checkout of `clalexander/flow-stack`                                              | Workspace inspection                                                              |
 | Branch                         | `ci/update`                                                                             | `git branch --show-current`                                                       |
 | Baseline commit                | `525e8d7817b205d39b33f37b938655a1a8cad775`                                              | `git rev-parse HEAD`                                                              |
 | Working tree                   | Clean                                                                                   | `git status --short` returned no entries                                          |
 | Relevant components            | GitHub workflows, Dependabot, semantic-release, package metadata, release documentation | `.github/`, `package.json`, `release.config.mjs`, `CONTRIBUTING.md`               |
 | Existing Flow Stack plans/docs | No `/docs` tree existed at baseline                                                     | Workspace file search                                                             |
-| Comparison source              | Synaptech `npm-packages` automation and `docs/development/release.md`                   | Repository inspection                                                             |
+| Comparison source              | Internal reference monorepo automation and release documentation                        | Repository inspection                                                             |
 | Recent automation history      | Action upgrades and dependency update commits are active on the branch                  | `git log -5 --oneline -- .github package.json release.config.mjs CONTRIBUTING.md` |
 | Toolchain                      | Node 20.19+; pnpm 10; CI uses Node 20, 22, and 24                                       | `package.json`, `.github/workflows/ci.yml`                                        |
 
@@ -167,16 +167,17 @@ An ignored `package-lock.json` exists locally but is not authoritative. `pnpm-lo
 | 20       | 5.2          | 2026-09-03 | AWAITING ACCEPTANCE | Extended the P4-T001 compatibility holds so React, React DOM, and their type packages are ignored by bare `pnpm update`, matching the Dependabot major ignores that reserve React majors for the watcher.        | User direction                            |
 | 21       | 5.2          | 2026-09-03 | IN PROGRESS         | Recorded Phase 4 acceptance and Phase 5 authorization, and activated documentation, contributor-alignment, ruleset, and final-proof tasks P5-T001 through P5-T004.                                               | User authorization and Phase 5 start      |
 | 22       | 5.2          | 2026-09-03 | IN PROGRESS         | Completed P5-T001 and P5-T002 by adding the `docs/` knowledge base with CI and release runbooks and aligning contributor guidance with conventional squash titles and generated release artifacts.               | Phase 5 implementation checkpoint         |
+| 23       | 5.2          | 2026-09-03 | COMPLETE            | Recorded Phase 5 acceptance with P5-T003 and P5-T004 deferred, redacted local paths and third-party repository identifiers, and relocated this record to `docs/plans/`.                                          | User direction and initiative closeout    |
 
 ## Phase Status
 
-| Phase | Conceptual Boundary                                                | Status      | Backlog Progress                 | Authorization       | Acceptance          | Revision |
-| ----- | ------------------------------------------------------------------ | ----------- | -------------------------------- | ------------------- | ------------------- | -------- |
-| 1     | Canonical verification and React compatibility                     | COMPLETE    | 5 / 5 complete                   | Received 2026-09-02 | Received 2026-09-02 | 9        |
-| 2     | Supply-chain validation and action normalization                   | COMPLETE    | 2 / 2 active complete; 2 removed | Received 2026-09-02 | Received 2026-09-02 | 14       |
-| 3     | Credentialed release and generated-PR automation                   | COMPLETE    | 5 / 5 complete                   | Received 2026-09-02 | Received 2026-09-02 | 17       |
-| 4     | Dependabot grouping, promotion, and policy                         | COMPLETE    | 4 / 4 complete                   | Received 2026-09-02 | Received 2026-09-03 | 21       |
-| 5     | Branch enforcement, operations documentation, and end-to-end proof | IN PROGRESS | 2 / 4 complete                   | Received 2026-09-03 | Not received        | 22       |
+| Phase | Conceptual Boundary                                                | Status   | Backlog Progress                 | Authorization       | Acceptance          | Revision |
+| ----- | ------------------------------------------------------------------ | -------- | -------------------------------- | ------------------- | ------------------- | -------- |
+| 1     | Canonical verification and React compatibility                     | COMPLETE | 5 / 5 complete                   | Received 2026-09-02 | Received 2026-09-02 | 9        |
+| 2     | Supply-chain validation and action normalization                   | COMPLETE | 2 / 2 active complete; 2 removed | Received 2026-09-02 | Received 2026-09-02 | 14       |
+| 3     | Credentialed release and generated-PR automation                   | COMPLETE | 5 / 5 complete                   | Received 2026-09-02 | Received 2026-09-02 | 17       |
+| 4     | Dependabot grouping, promotion, and policy                         | COMPLETE | 4 / 4 complete                   | Received 2026-09-02 | Received 2026-09-03 | 21       |
+| 5     | Branch enforcement, operations documentation, and end-to-end proof | COMPLETE | 2 / 4 complete; 2 deferred       | Received 2026-09-03 | Received 2026-09-03 | 23       |
 
 ## Requirement Sources
 
@@ -188,7 +189,7 @@ An ignored `package-lock.json` exists locally but is not authoritative. `pnpm-lo
 | SRC-003   | Repository security and CI rules              | Workflows/scripts   | Least privilege, OIDC, secret handling, trust-boundary validation                         |
 | SRC-004   | Environment safety constraints                | Local environment   | No installs, machine changes, services, or destructive actions without permission         |
 | SRC-005   | Current Flow Stack automation                 | Current behavior    | CI, release, React support, Dependabot, PR title checks, semantic-release                 |
-| SRC-006   | Synaptech `npm-packages` automation           | Comparison evidence | GitHub App tokens, dependency promotion, cooldowns, package checks, release docs          |
+| SRC-006   | Internal reference monorepo automation        | Comparison evidence | GitHub App tokens, dependency promotion, cooldowns, package checks, release docs          |
 | SRC-007   | Flow Stack package and contributor contracts  | Current behavior    | Supported engines/peers, scripts, branching model, release classification                 |
 
 ## Active Requirements
@@ -283,8 +284,8 @@ An ignored `package-lock.json` exists locally but is not authoritative. `pnpm-lo
 | ASM-001 | The repository uses squash merging so the PR title becomes the release-visible commit subject.                                | Existing PR-title workflow and semantic-release model | Releases may be missed or misclassified                                   | Confirm in Phase 5 manual settings; otherwise revise plan to add commit-message enforcement      |
 | ASM-002 | npm Trusted Publishing is available for `clalexander/flow-stack` and the public package.                                      | Existing `id-token: write` release design             | Publication cannot authenticate without a token                           | Verify before Phase 3; mark Phase 3 blocked if unavailable rather than adding a long-lived token |
 | ASM-003 | The user can create/install a GitHub App and configure repository rulesets/environments.                                      | User request                                          | Generated PR checks and protected release commits cannot work as designed | Complete manual gate before Phase 3                                                              |
-| ASM-004 | GitHub Actions Ubuntu runners provide npm compatible with `npm audit signatures` for the pnpm lockfile.                       | `npm-packages` pattern                                | Signature check may not understand the lockfile                           | Prove in Phase 2; stop for plan revision if unsupported                                          |
-| ASM-005 | One shared Release Automation App with repository-selected installations is acceptable for release commits and generated PRs. | User direction and `npm-packages` precedent           | Permission surface may exceed policy                                      | Split into repository-specific or purpose-specific Apps through a plan revision if required      |
+| ASM-004 | GitHub Actions Ubuntu runners provide npm compatible with `npm audit signatures` for the pnpm lockfile.                       | Reference monorepo pattern                            | Signature check may not understand the lockfile                           | Prove in Phase 2; stop for plan revision if unsupported                                          |
+| ASM-005 | One shared Release Automation App with repository-selected installations is acceptable for release commits and generated PRs. | User direction and reference monorepo precedent       | Permission surface may exceed policy                                      | Split into repository-specific or purpose-specific Apps through a plan revision if required      |
 
 ### Constraints
 
@@ -1187,7 +1188,7 @@ Replace the production/development npm groups with one group named `npm-dependen
 
 Add one GitHub Actions group named `github-actions` using `patterns: ['*']` and set that ecosystem's `open-pull-requests-limit` to `1`. Its title must remain `ci(deps):` and must not request an npm release. Dependabot cannot combine ecosystems into one PR, so these two group PRs are the complete routine update surface.
 
-Add cooldown defaults of 3 days, major 7, minor 3, and patch 2 as adopted from `npm-packages`. Add only compatibility ignores supported by current Flow Stack evidence; do not copy `type-fest` or monorepo-specific exceptions. Scheduled security updates that GitHub cannot combine with ordinary version updates are an explicit platform exception; enable grouped security updates per ecosystem in repository settings where available, but never split routine version updates into per-package PRs to emulate them.
+Add cooldown defaults of 3 days, major 7, minor 3, and patch 2 as adopted from the reference monorepo. Add only compatibility ignores supported by current Flow Stack evidence; do not copy `type-fest` or monorepo-specific exceptions. Scheduled security updates that GitHub cannot combine with ordinary version updates are an explicit platform exception; enable grouped security updates per ecosystem in repository settings where available, but never split routine version updates into per-package PRs to emulate them.
 
 #### 4.2 Add promotion workflow
 
@@ -1252,7 +1253,7 @@ Controlled GitHub cases must cover DEP-001 through DEP-007. If creating real tes
 - Automated repairs: Prettier applied to this plan after the revision 17 checkpoint
 - Security and operational evidence: `pull_request_target` is used only for merged-event metadata and GitHub API calls, with no checkout or execution of pull request code; every untrusted event field is passed through `env:` and never interpolated into a shell body; both jobs set `permissions: {}` so the ambient workflow token has no scopes; mutation uses ephemeral App tokens with per-job permissions; fork pull requests are excluded; the merge commit must be a 40-character SHA contained in `dev`; promotion is skipped when `main` already contains it; branch creation and deletion require exact SHA matches; promotion PRs are drafts, so nothing auto-merges.
 - Manual configuration evidence: None required in Phase 4
-- Deviations: Revision 19 accepts that the npm ecosystem keeps `commit-message.prefix: chore` with `include: scope`, so Dependabot's own scope is preserved and a development-only group remains `chore(deps-dev)` and intentionally does not release; DR-005, DEC-006, step 4.1, and the Phase 4 acceptance criterion were aligned, and the promotion workflow mirrors the source scope rather than forcing `chore(deps)`. `pnpm-workspace.yaml` also gained `updateConfig.ignoreDependencies` holds for ESLint 10 and TypeScript, verified against the settings list recognized by the pinned pnpm 10 release; the pnpm 11 spelling `update.ignoreDeps` is inert on pnpm 10. Cooldown is applied to the npm ecosystem only, matching the `npm-packages` precedent, because the official option reference could not be reached to confirm cooldown support for the `github-actions` ecosystem. A title whose scope is not valid for its group is a hard failure rather than a no-op; this is an invariant beyond DEP-007 and is intentionally visible. Revision 20 adds `react`, `react-dom`, `@types/react`, and `@types/react-dom` to `updateConfig.ignoreDependencies` so the watcher owns React majors for manual updates as well as Dependabot; because that list has no version granularity it also suppresses React patch bumps during a bare `pnpm update`, which the grouped Dependabot pull request still delivers.
+- Deviations: Revision 19 accepts that the npm ecosystem keeps `commit-message.prefix: chore` with `include: scope`, so Dependabot's own scope is preserved and a development-only group remains `chore(deps-dev)` and intentionally does not release; DR-005, DEC-006, step 4.1, and the Phase 4 acceptance criterion were aligned, and the promotion workflow mirrors the source scope rather than forcing `chore(deps)`. `pnpm-workspace.yaml` also gained `updateConfig.ignoreDependencies` holds for ESLint 10 and TypeScript, verified against the settings list recognized by the pinned pnpm 10 release; the pnpm 11 spelling `update.ignoreDeps` is inert on pnpm 10. Cooldown is applied to the npm ecosystem only, matching the reference monorepo precedent, because the official option reference could not be reached to confirm cooldown support for the `github-actions` ecosystem. A title whose scope is not valid for its group is a hard failure rather than a no-op; this is an invariant beyond DEP-007 and is intentionally visible. Revision 20 adds `react`, `react-dom`, `@types/react`, and `@types/react-dom` to `updateConfig.ignoreDependencies` so the watcher owns React majors for manual updates as well as Dependabot; because that list has no version granularity it also suppresses React patch bumps during a bare `pnpm update`, which the grouped Dependabot pull request still delivers.
 - Unresolved issues: Hosted evidence remains required for DEP-001 through DEP-007. Confirm on the first grouped run that real branch names are `dependabot/npm_and_yarn/dev/npm-dependencies-<hash>` and `dependabot/github_actions/dev/github-actions-<hash>` and that npm titles carry the expected `chore(deps):` or `chore(deps-dev):` scope. Dependabot reads `.github/dependabot.yml` from the default branch, the promotion job is read from `dev`, and the cleanup job is read from `main`, so all three must land before events behave as designed. Confirm the Dependabot configuration reports no schema error. Existing per-dependency Dependabot pull requests predate grouping and should be closed manually. With `target-branch: dev`, GitHub may not raise security update pull requests at all; if it does, ungrouped security branches are intentionally not promoted and require manual promotion. A promotion branch is a full `dev` snapshot, so an Actions promotion can carry unrelated releasable commits; the pull request body states this. `pr-title.yml` skips `release/**` heads, so a manually edited promotion title is not validated.
 - Next action: STOP. Await hosted Phase 4 evidence, explicit Phase 4 acceptance, and Phase 5 authorization.
 
@@ -1264,7 +1265,7 @@ Make repository policy enforce the verified workflow contracts, document operati
 
 ### Status and Gate
 
-- Status: IN PROGRESS
+- Status: COMPLETE
 - Start requires: Phase 4 accepted and `Authorize Phase 5.`
 - A real npm release requires separate explicit authorization at the point of execution.
 - Exit requires: all initiative acceptance criteria and explicit final acceptance
@@ -1281,12 +1282,12 @@ SR-008, OR-002, PR-003, FR-006, all acceptance criteria
 
 ### Phase Task Backlog
 
-| Task ID | Task                                                         | Requirements    | Detailed Step | Dependencies    | Deliverable                  | Verification              | Status      |
-| ------- | ------------------------------------------------------------ | --------------- | ------------- | --------------- | ---------------------------- | ------------------------- | ----------- |
-| P5-T001 | Write release and CI operations documentation                | OR-002, PR-003  | 5.1           | Prior phases    | Durable runbooks             | Documentation review      | COMPLETE    |
-| P5-T002 | Align contributor/PR guidance                                | FR-006, ASM-001 | 5.2           | P5-T001         | Conventional/squash guidance | Documentation review      | COMPLETE    |
-| P5-T003 | Configure and test branch rulesets                           | SR-008          | 5.3           | Stable checks   | M-004 evidence               | Controlled rules tests    | NOT STARTED |
-| P5-T004 | Execute final verification and controlled release acceptance | All             | 5.4           | P5-T001-P5-T003 | M-005 and final closeout     | Full command/run evidence | NOT STARTED |
+| Task ID | Task                                                         | Requirements    | Detailed Step | Dependencies    | Deliverable                  | Verification              | Status   |
+| ------- | ------------------------------------------------------------ | --------------- | ------------- | --------------- | ---------------------------- | ------------------------- | -------- |
+| P5-T001 | Write release and CI operations documentation                | OR-002, PR-003  | 5.1           | Prior phases    | Durable runbooks             | Documentation review      | COMPLETE |
+| P5-T002 | Align contributor/PR guidance                                | FR-006, ASM-001 | 5.2           | P5-T001         | Conventional/squash guidance | Documentation review      | COMPLETE |
+| P5-T003 | Configure and test branch rulesets                           | SR-008          | 5.3           | Stable checks   | M-004 evidence               | Controlled rules tests    | DEFERRED |
+| P5-T004 | Execute final verification and controlled release acceptance | All             | 5.4           | P5-T001-P5-T003 | M-005 and final closeout     | Full command/run evidence | DEFERRED |
 
 ### File Allowlist
 
@@ -1360,7 +1361,31 @@ GitHub/npm validation follows active AC-001 through AC-007 and M-005.
 
 ### Phase Closeout
 
-Stop at `AWAITING ACCEPTANCE`; mark `COMPLETE` only after explicit user acceptance and final document disposition.
+- Status: COMPLETE
+- Authorization received: 2026-09-03 (`Phase 4 accepted. Proceed with phase 5`)
+- Acceptance received: 2026-09-03 (`Phase 5 accepted. Mark as completed.`)
+- Started on: 2026-09-03
+- Completed on: 2026-09-03
+- Plan revision at start: 21
+- Plan revision at closeout: 23
+- Requirements addressed: OR-002, PR-003, and FR-006 through documentation. SR-008 remains maintainer configuration work and was not executed.
+- Backlog results:
+  - Completed: P5-T001, P5-T002
+  - Deferred by user acceptance: P5-T003 and P5-T004
+  - Remaining: None within this initiative
+  - Tasks added during implementation: None
+- Changed files: `docs/README.md`, `docs/development/README.md`, `docs/development/ci.md`, `docs/development/release.md`, `CONTRIBUTING.md`, `.github/pull_request_template.md`, `README.md`, and this plan, which moved from `docs/development/` to `docs/plans/`
+- Public API changes: None
+- Data or migration changes: None
+- Semantic case results: None were executed in this phase. The new documentation records the semantics proven in Phases 1 through 4.
+- Validation: `pnpm run format:check` PASS; `pnpm run lint` PASS; workspace diagnostics PASS; `git diff --check` PASS; documentation cross-link check PASS; credential pattern scan of `docs/` PASS with no key material, token, or authorization header
+- Automated repairs: Prettier applied to the new documentation and to this plan
+- Security and operational evidence: Before publication, the local filesystem path in the planning baseline was replaced with a repository reference, and named third-party repository identifiers were generalized to an internal reference monorepo. Documented secret and variable names are identifiers only and disclose no values.
+- Manual configuration evidence: None. M-004 and M-005 were not performed, so branch rulesets, required checks, bypass actors, and publication provenance are unverified.
+- Deviations: P5-T003 and P5-T004 were accepted without execution. AC-003, AC-005, and AC-007 therefore carry no recorded evidence, and the Final Definition of Done is satisfied only for the automation this initiative implemented.
+- Unresolved issues: No branch ruleset is configured, so no required check is enforced and the documented `main` bypass does not yet exist. Outstanding hosted evidence from Phases 3 and 4 and a controlled release are now ordinary maintenance work rather than initiative work.
+- Final document disposition: Retained as a historical initiative record at `docs/plans/flow-stack-ci-modernization-plan.md`. Durable operations documentation lives under `docs/development/`.
+- Next action: None. The initiative is closed.
 
 ## Cross-Phase Dependencies
 
@@ -1449,6 +1474,8 @@ The initiative is complete only when:
 8. This plan contains final evidence and no unresolved gate.
 9. Final document disposition is explicitly recorded.
 
+Closed on 2026-09-03 by user acceptance with conditions 2, 5, and 6 unmet, because P5-T003 and P5-T004 were deferred. AC-003, AC-005, and AC-007 have no recorded evidence, and branch rulesets, hosted workflow runs, and a controlled release remain outstanding as maintenance work.
+
 ## Plan Readiness Checklist
 
 - [x] User and environment requirements are consolidated with stable IDs.
@@ -1468,11 +1495,11 @@ The initiative is complete only when:
 
 ## Handoff to Implementing Agent
 
-- Canonical plan: `docs/development/flow-stack-ci-modernization-plan.md`
-- Authorized phase: Phase 5
-- Plan version/revision: 5.2/22
+- Canonical plan: `docs/plans/flow-stack-ci-modernization-plan.md`
+- Authorized phase: None; the initiative is closed
+- Plan version/revision: 5.2/23
 - Baseline commit: `525e8d7817b205d39b33f37b938655a1a8cad775`
-- Mandatory first action: Read the canonical plan in full.
-- Active phase backlog: P5-T003 and P5-T004; P5-T001 and P5-T002 are complete
-- Stop condition: P5-T003 requires the user to complete M-004 before ruleset behavior can be tested, and P5-T004 requires hosted evidence plus separate authorization for a real release.
-- Prohibited action: Do not plan or begin the next phase without rereading this plan and receiving authorization.
+- Mandatory first action: Read this plan in full before reopening any phase.
+- Active phase backlog: None
+- Stop condition: Reopening this initiative requires a documented revision and explicit authorization.
+- Prohibited action: Do not treat P5-T003 or P5-T004 as delivered. They were accepted without execution, and the branch rulesets and controlled release they cover remain outstanding.

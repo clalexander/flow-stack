@@ -32,7 +32,7 @@ The release path depends on external configuration that lives outside this repos
 
 No long-lived npm token exists. Publication authenticates through GitHub OIDC. If publishing fails, fix the trusted publisher configuration; do not add a token.
 
-Setup steps are recorded in the manual configuration runbook of the [CI modernization plan](./flow-stack-ci-modernization-plan.md).
+Setup steps are recorded in the manual configuration runbook of the [CI modernization plan](../plans/flow-stack-ci-modernization-plan.md).
 
 ## The Release Path
 
