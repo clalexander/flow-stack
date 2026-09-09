@@ -10,17 +10,26 @@ Because pull requests are squash merged, the pull request title becomes the comm
 
 ## Release Classification
 
-| Commit subject                              | Result        |
-| ------------------------------------------- | ------------- |
-| `feat: ...`                                 | minor release |
-| `fix: ...` or `perf: ...`                   | patch release |
-| `chore(deps): ...`                          | patch release |
-| `chore(deps-dev): ...`                      | no release    |
-| `ci: ...` or `test: ...`                    | no release    |
-| `chore(release): ...`                       | no release    |
-| Any commit with a `BREAKING CHANGE:` footer | major release |
+| Commit subject                                                      | Result        |
+| ------------------------------------------------------------------- | ------------- |
+| `feat: ...`                                                         | minor release |
+| `fix: ...` or `perf: ...`                                           | patch release |
+| `chore(deps): ...`                                                  | patch release |
+| `chore(deps-dev): ...`                                              | no release    |
+| `ci: ...` or `test: ...`                                            | no release    |
+| `chore(release): ...`                                               | no release    |
+| `!` in a conventional commit header, or a `BREAKING CHANGE:` footer | major release |
 
 Types such as `docs`, `refactor`, `style`, and `build` do not trigger a release on their own.
+
+The repository keeps an inactive release-rule template beside the active rules in `release.config.mjs`:
+
+```js
+// For pre-1.0 projects, uncomment to classify breaking changes as minor releases.
+// { breaking: true, release: 'minor' },
+```
+
+It is guidance for a future pre-1.0 project, not Flow Stack policy. Do not uncomment it here without a separately reviewed release-policy change.
 
 ## Prerequisites
 
@@ -45,7 +54,7 @@ Setup steps are recorded in the manual configuration runbook of the [CI moderniz
 
 If no commit warrants a release, the run is a successful no-op.
 
-The release commit is `chore(release): <version>`, which is classified as non-releasing, so it cannot cause a second release. It does re-trigger the workflow once; that run verifies and then no-ops.
+The release commit is `chore(release): <version>`, which is classified as non-releasing, so it cannot cause a second release. It does re-trigger the workflow once; that run verifies and then no-ops. The generated-commit run also skips the back-merge job, preventing a duplicate synchronization attempt.
 
 ## Dry Run
 
@@ -55,7 +64,7 @@ The dry run is mechanically incapable of publishing. It runs in a separate job w
 
 ## Back-Merge
 
-The post-release sync pull request opens only when `main` is ahead of `dev`. If an equivalent pull request already exists for the current `main` commit, the step is a no-op. Merge it promptly so `dev` does not drift.
+The post-release sync pull request opens only when `main` is ahead of `dev`. Any open same-repository pull request from `main` to `dev` is the existing synchronization, regardless of the PR's observed head SHA, so the step is a no-op. Merge it promptly so `dev` does not drift.
 
 ## Hotfixes
 
