@@ -138,7 +138,10 @@ jobs:
 
   sync-main-into-dev:
     name: Open sync PR to dev
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: >-
+      ${{ github.ref == 'refs/heads/main' &&
+      (github.event_name != 'push' ||
+      !startsWith(github.event.head_commit.message, 'chore(release): ')) }}
     needs: release
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -176,10 +179,13 @@ jobs:
             --base dev \
             --head "$owner:main" \
             --state open \
-            --json headRefOid,headRepository,number \
-            --jq "[.[] | select(.headRepository.nameWithOwner == \"$REPO\" and .headRefOid == \"$main_sha\")]")"
+            --json headRefOid,headRepository,number,url \
+            --jq "[.[] | select(.headRepository.nameWithOwner == \"$REPO\")]")"
           if [[ "$(jq 'length' <<<"$matching_prs")" -gt 0 ]]; then
-            echo "A sync PR from main at $main_sha to dev already exists."
+            existing_pr_number="$(jq -r '.[0].number' <<<"$matching_prs")"
+            existing_pr_url="$(jq -r '.[0].url' <<<"$matching_prs")"
+            existing_pr_head_sha="$(jq -r '.[0].headRefOid' <<<"$matching_prs")"
+            echo "Sync PR #$existing_pr_number already exists: $existing_pr_url (PR head $existing_pr_head_sha; main $main_sha)."
             exit 0
           fi
 

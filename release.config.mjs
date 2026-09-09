@@ -5,6 +5,8 @@ const commitAnalyzer = [
   '@semantic-release/commit-analyzer',
   {
     releaseRules: [
+      // For pre-1.0 projects, uncomment to classify breaking changes as minor releases.
+      // { breaking: true, release: 'minor' },
       { type: 'chore', scope: 'deps', release: 'patch' },
       { type: 'chore', scope: 'deps-dev', release: false },
       { type: 'ci', release: false },
