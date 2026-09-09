@@ -35,4 +35,4 @@ pnpm run format
 
 ## Dependency Updates
 
-`pnpm-workspace.yaml` holds compatibility pins through `update.ignoreDeps`. That list suppresses packages only during a bare `pnpm update`; naming a package explicitly, such as `pnpm update react`, still updates it. React majors are owned by the React compatibility watcher described in [ci.md](./ci.md).
+`pnpm-workspace.yaml` holds two package-manager policies: compatibility pins through `update.ignoreDeps`, and reviewed `overrides` for transitive advisories without a compatible direct upgrade path. The ignore list suppresses packages only during a bare `pnpm update`; naming a package explicitly, such as `pnpm update react`, still updates it. React majors are owned by the React compatibility watcher described in [ci.md](./ci.md).
