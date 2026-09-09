@@ -1,6 +1,6 @@
 {
   "name": "flow-stack",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A React library for stack-based navigation inside external containers.",
   "keywords": [
     "flow-stack",
