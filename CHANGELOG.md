@@ -1,3 +1,5 @@
+## [1.0.1](https://github.com/clalexander/flow-stack/compare/v1.0.0...v1.0.1) (2026-09-09)
+
 # [1.0.0](https://github.com/clalexander/flow-stack/compare/v0.2.3...v1.0.0) (2026-09-03)
 
 
