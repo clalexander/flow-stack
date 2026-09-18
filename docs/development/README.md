@@ -4,7 +4,7 @@ Operational documentation for building, verifying, and releasing Flow Stack.
 
 ## Contents
 
-- [Continuous integration](./ci.md): workflow topology, the required checks, the compatibility matrix, supply-chain audits, and dependency automation.
+- [Continuous integration](./ci.md): workflow topology, the required checks, the compatibility matrix, example builds, Pages deployment, supply-chain audits, and dependency automation.
 - [Release operations](./release.md): release classification, prerequisites, the release path, recovery, and rollback.
 - [CI modernization plan](../plans/flow-stack-ci-modernization-plan.md): the initiative record describing why the current automation exists.
 

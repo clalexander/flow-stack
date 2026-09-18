@@ -13,9 +13,11 @@ It demonstrates:
 
 ## Run
 
-From this folder:
+From the repository root:
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm --filter @flow-stack/example-basic dev
 ```
+
+The deployed version is available at <https://clalexander.github.io/flow-stack/basic/>.

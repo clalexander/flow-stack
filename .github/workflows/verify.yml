@@ -78,6 +78,34 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
+  examples:
+    name: Examples
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build examples
+        run: pnpm run build:examples
+
   compatibility:
     name: Compatibility (Node ${{ matrix.node }}, React ${{ matrix.react }})
     needs:
@@ -147,6 +175,7 @@ jobs:
       - prepare
       - quality
       - compatibility
+      - examples
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -156,12 +185,14 @@ jobs:
           PREPARE_RESULT: ${{ needs.prepare.result }}
           QUALITY_RESULT: ${{ needs.quality.result }}
           COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
+          EXAMPLES_RESULT: ${{ needs.examples.result }}
         run: |
           failed=0
           for result in \
             "prepare=$PREPARE_RESULT" \
             "quality=$QUALITY_RESULT" \
-            "compatibility=$COMPATIBILITY_RESULT"; do
+            "compatibility=$COMPATIBILITY_RESULT" \
+            "examples=$EXAMPLES_RESULT"; do
             if [[ "${result#*=}" != "success" ]]; then
               echo "Required job did not succeed: $result" >&2
               failed=1
