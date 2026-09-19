@@ -8,6 +8,7 @@ Flow Stack has one authoritative verification contract. Pull requests and releas
 | ------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
 | `ci.yml`                  | Pull requests to `main`, `dev`, `release/**`, `hotfix/**`, and manual dispatch | Thin caller that runs verification for unprivileged changes        |
 | `verify.yml`              | `workflow_call` only                                                           | Owns all quality and compatibility checks                          |
+| `pages.yml`               | Pushes to `main` and manual dispatch                                           | Builds and deploys the interactive examples to GitHub Pages        |
 | `release.yml`             | Push to `main`, and manual dispatch                                            | Verifies, then publishes or performs an analysis-only dry run      |
 | `pr-title.yml`            | `pull_request`                                                                 | Validates conventional pull request titles                         |
 | `react-major-support.yml` | Monthly schedule and manual dispatch                                           | Proposes support for a new React major                             |
@@ -17,16 +18,29 @@ Flow Stack has one authoritative verification contract. Pull requests and releas
 
 ## The Verification Contract
 
-`verify.yml` runs three working jobs and one aggregate:
+`verify.yml` runs four working jobs and one aggregate:
 
 1. **Prepare compatibility matrix** derives the supported React majors from package metadata.
 2. **Quality** installs with a frozen lockfile, audits dependencies, then checks formatting and lint.
-3. **Compatibility** runs typecheck, build, and tests across every supported Node and React combination with `fail-fast: false`.
-4. **Verification** is the stable aggregate. It runs with `if: always()` and succeeds only when every upstream job succeeded, so a failed, cancelled, or unexpectedly skipped job fails the check.
+3. **Examples** installs with a frozen lockfile and builds both Vite example packages.
+4. **Compatibility** runs typecheck, build, and tests across every supported Node and React combination with `fail-fast: false`.
+5. **Verification** is the stable aggregate. It runs with `if: always()` and succeeds only when every upstream job succeeded, so a failed, cancelled, or unexpectedly skipped job fails the check.
 
 `Verification` is a naming contract with branch protection. Renaming that job breaks required status checks.
 
 Verification has read-only repository permission, receives no secrets, and never mutates remote state.
+
+## GitHub Pages
+
+`pages.yml` publishes the examples as a project site at [the Flow Stack Pages site](https://clalexander.github.io/flow-stack/). It builds the examples with `/flow-stack/basic/` and `/flow-stack/advanced/` base paths, assembles them with the static landing page, and deploys the artifact through the `github-pages` environment.
+
+The workflow runs after pushes to `main` and can be dispatched manually. Pull requests validate the examples through `verify.yml`; they do not create preview deployments. Repository Pages settings must use **GitHub Actions** as the deployment source.
+
+Build both examples locally with:
+
+```bash
+pnpm run build:examples
+```
 
 ## Required Checks
 

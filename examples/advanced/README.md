@@ -30,9 +30,11 @@ This example builds on the basic example and demonstrates a broader set of FlowS
 
 ## Run
 
-From this folder:
+From the repository root:
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm --filter @flow-stack/example-advanced dev
 ```
+
+The deployed version is available at <https://clalexander.github.io/flow-stack/advanced/>.
