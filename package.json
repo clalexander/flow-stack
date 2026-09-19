@@ -52,6 +52,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsdown",
+    "build:examples": "pnpm --filter @flow-stack/example-* build",
     "clean": "rimraf dist",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
     "format": "prettier --write .",

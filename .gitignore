@@ -1,6 +1,7 @@
 package-lock.json
 node_modules
 dist
+examples/*/dist
 *.log
 .DS_Store
 coverage

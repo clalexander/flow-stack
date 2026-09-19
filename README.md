@@ -32,8 +32,14 @@ Most React navigation libraries assume they own the URL or the full viewport. `f
 ## Installation
 
 ```bash
-corepack enable
-pnpm install
+# pnpm
+pnpm install flow-stack
+
+# npm
+npm install flow-stack
+
+# yarn
+yarn add flow-stack
 ```
 
 Requires React and React DOM 18 or 19.
@@ -91,7 +97,12 @@ Transitions are resolved in priority order: **action options → route-level tra
 
 ## Examples
 
-Examples coming soon. In the meantime, see the [Quick start](#quick-start) above or browse the [source on GitHub](https://github.com/clalexander/flow-stack).
+Try the interactive examples:
+
+- [Basic example](https://clalexander.github.io/flow-stack/basic/): a minimal two-screen stack using `push`, `pop`, and default slide transitions.
+- [Advanced example](https://clalexander.github.io/flow-stack/advanced/): custom transitions, route params, external controls, reduced-motion settings, and stack state debugging.
+
+The example source and local run instructions are in [`examples/`](./examples/).
 
 ## Docs
 
