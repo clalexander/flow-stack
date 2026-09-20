@@ -3,6 +3,7 @@ layout: default
 title: Guards and matchers
 parent: Guides
 nav_order: 4
+permalink: /guards-and-matchers/
 ---
 
 Guards decide whether an action may proceed; matchers locate entries already in the stack.

@@ -3,6 +3,7 @@ layout: default
 title: Quick start
 parent: Get started
 nav_order: 2
+permalink: /quick-start/
 ---
 
 Create two screens, register them with a provider, and render the active screen in a viewport.

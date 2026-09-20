@@ -3,6 +3,7 @@ layout: default
 title: Provider
 parent: Guides
 nav_order: 1
+permalink: /provider/
 ---
 
 `NavigationStackProvider` owns the stack state for one navigation context.

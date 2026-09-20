@@ -3,6 +3,7 @@ layout: default
 title: API summary
 parent: Reference
 nav_order: 1
+permalink: /api/
 ---
 
 Use this page to choose the runtime API you need. The [type reference]({{ site.baseurl }}/types/) documents the exported TypeScript contracts behind each API.
