@@ -1,9 +1,15 @@
 ---
-layout: page
+layout: default
 title: Quick start
+parent: Get started
+nav_order: 2
 ---
 
-# Quick start
+Create two screens, register them with a provider, and render the active screen in a viewport.
+
+{% include page-toc.md %}
+
+## Build a stack
 
 ```tsx
 import {
@@ -12,13 +18,18 @@ import {
   NavigationStackViewport,
   useNavigationStack,
 } from 'flow-stack';
+import type { NavigationParams, NavigationScreenRenderProps } from 'flow-stack';
+
+interface DetailsParams extends NavigationParams {
+  id: string;
+}
 
 function HomeScreen() {
   const nav = useNavigationStack();
   return <button onClick={() => nav.push('details', { id: '1' })}>Open</button>;
 }
 
-function DetailsScreen({ params }) {
+function DetailsScreen({ params }: NavigationScreenRenderProps<DetailsParams>) {
   const nav = useNavigationStack();
   return (
     <div>
@@ -41,6 +52,15 @@ export function App() {
 }
 ```
 
-See it running in the [Basic example]({{ site.baseurl }}/basic/).
+The wrapper gives the viewport a stable size. Flow Stack fills its container; it does not size or position the surrounding UI.
 
-[Back to home]({{ site.baseurl }}/)
+## What happens
+
+1. The provider creates an independent stack named `main` and activates `home`.
+2. Each `NavigationStackScreen` registers a route and its component.
+3. The viewport renders the active route at the size of its parent.
+4. `useNavigationStack` exposes typed navigation methods to descendant components.
+
+## Next steps
+
+See it running in the [Basic example]({{ site.baseurl }}/basic/), then read [Core concepts]({{ site.baseurl }}/concepts/) for the state and rendering model.

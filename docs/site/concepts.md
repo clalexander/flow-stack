@@ -1,9 +1,15 @@
 ---
-layout: page
+layout: default
 title: Core concepts
+parent: Get started
+nav_order: 3
 ---
 
-# Core concepts
+Flow Stack separates navigation state from scene rendering so each stack can live wherever your interface needs it.
+
+{% include page-toc.md %}
+
+## Building blocks
 
 | Concept              | Description                                                                                                           |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -23,5 +29,3 @@ Transitions are resolved in priority order: **action options → route-level tra
 Mount as many `NavigationStackProvider` instances as you need — each is fully isolated and identified by its `id`. When more than one stack is mounted, `useNavigationStack(stackId)` and `<NavigationStackViewport stackId="...">` target a specific stack instead of the nearest provider.
 
 Next: [Provider guide]({{ site.baseurl }}/provider/) · [Viewport guide]({{ site.baseurl }}/viewport/)
-
-[Back to home]({{ site.baseurl }}/)

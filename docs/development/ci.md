@@ -32,9 +32,11 @@ Verification has read-only repository permission, receives no secrets, and never
 
 ## GitHub Pages
 
-`pages.yml` publishes [the Flow Stack Pages site](https://clalexander.github.io/flow-stack/). The site root is a minimal Jekyll usage-docs site built from `docs/site/`; each example under `examples/` is auto-discovered, built with a `/flow-stack/<example-directory>/` base path, and copied to the matching path (`/basic/`, `/advanced/`) alongside it. Adding a new example directory does not require a workflow change.
+`pages.yml` publishes [the Flow Stack Pages site](https://clalexander.github.io/flow-stack/). The documentation site is built from `docs/site/` with the pinned Just the Docs remote theme. Each example under `examples/` is auto-discovered, built with a `/flow-stack/<example-directory>/` base path, and copied to the matching path (`/basic/`, `/advanced/`) alongside it. Adding a new example directory does not require a workflow change.
 
 The workflow runs after pushes to `main` and can be dispatched manually. Pull requests validate the examples through `verify.yml`; they do not create preview deployments. Repository Pages settings must use **GitHub Actions** as the deployment source.
+
+The GitHub Pages workflow is the authoritative documentation build environment; the repository does not require a local Ruby or Bundler toolchain.
 
 Build both examples locally with:
 
