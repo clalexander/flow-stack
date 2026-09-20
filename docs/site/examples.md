@@ -1,13 +1,21 @@
 ---
-layout: page
+layout: default
 title: Examples
+nav_order: 4
 ---
 
-# Examples
+Use the examples to compare a minimal stack with a more configurable application.
 
-- [Basic example]({{ site.baseurl }}/basic/): a minimal two-screen stack using `push`, `pop`, and default slide transitions.
-- [Advanced example]({{ site.baseurl }}/advanced/): custom transitions, route params, external controls, reduced-motion settings, and stack state debugging.
+{% include page-toc.md %}
+
+## Basic
+
+The [basic example]({{ site.baseurl }}/basic/) demonstrates a minimal two-screen stack using `push`, `pop`, and default slide transitions.
+
+## Advanced
+
+The [advanced example]({{ site.baseurl }}/advanced/) demonstrates custom transitions, route params, external controls, reduced-motion settings, and stack state debugging.
+
+## Source
 
 The example source and local run instructions are in the [`examples/` folder](https://github.com/clalexander/flow-stack/tree/main/examples).
-
-[Back to home]({{ site.baseurl }}/)
