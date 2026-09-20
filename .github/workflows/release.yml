@@ -166,7 +166,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          owner="${REPO%%/*}"
           main_sha="$(gh api "repos/$REPO/git/ref/heads/main" --jq '.object.sha')"
           ahead_by="$(gh api "repos/$REPO/compare/dev...main" --jq '.ahead_by')"
           if [[ "$ahead_by" -eq 0 ]]; then
@@ -174,10 +173,11 @@ jobs:
             exit 0
           fi
 
+          # "owner:branch" head syntax only matches fork PRs, so use the bare branch name here.
           matching_prs="$(gh pr list \
             --repo "$REPO" \
             --base dev \
-            --head "$owner:main" \
+            --head main \
             --state open \
             --json headRefOid,headRepository,number,url \
             --jq "[.[] | select(.headRepository.nameWithOwner == \"$REPO\")]")"
@@ -189,10 +189,18 @@ jobs:
             exit 0
           fi
 
-          pr_url="$(gh pr create \
+          # Guard against a race with another concurrent run creating the same PR.
+          if ! pr_url="$(gh pr create \
             --repo "$REPO" \
             --base dev \
             --head main \
             --title "chore: sync main into dev" \
-            --body "Automated post-release sync PR from \`main\` at \`$main_sha\` into \`dev\`.")"
+            --body "Automated post-release sync PR from \`main\` at \`$main_sha\` into \`dev\`." 2>&1)"; then
+            if grep -qi "already exists" <<<"$pr_url"; then
+              echo "Sync PR creation skipped: $pr_url"
+              exit 0
+            fi
+            echo "$pr_url" >&2
+            exit 1
+          fi
           echo "Created sync PR $pr_url from main at $main_sha to dev."
