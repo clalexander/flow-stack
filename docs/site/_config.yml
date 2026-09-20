@@ -1,0 +1,5 @@
+title: Flow Stack
+description: Stack-based navigation for React — designed to live inside a container, not own the page.
+theme: minima
+url: https://clalexander.github.io
+baseurl: /flow-stack

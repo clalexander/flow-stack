@@ -106,7 +106,7 @@ The example source and local run instructions are in [`examples/`](./examples/).
 
 ## Docs
 
-Deeper documentation (transitions, controlled mode, accessibility, headless controller) is in progress. Questions and requests are welcome on the [GitHub issues page](https://github.com/clalexander/flow-stack/issues).
+The published usage docs are at [clalexander.github.io/flow-stack](https://clalexander.github.io/flow-stack/). Deeper documentation (transitions, controlled mode, accessibility, headless controller) is in progress. Questions and requests are welcome on the [GitHub issues page](https://github.com/clalexander/flow-stack/issues).
 
 Contributor and maintainer documentation lives in [`docs/`](./docs/README.md).
 
