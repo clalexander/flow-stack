@@ -44,27 +44,22 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
-      - name: Build basic example
-        env:
-          BASE_PATH: /flow-stack/basic/
-        run: pnpm --filter @flow-stack/example-basic build
+      - name: Build usage docs
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: docs/site
+          destination: site
 
-      - name: Build advanced example
-        env:
-          BASE_PATH: /flow-stack/advanced/
-        run: pnpm --filter @flow-stack/example-advanced build
+      - name: Build examples
+        run: node .github/scripts/build-pages-examples.ts
 
       - name: Assemble Pages site
-        run: |
-          mkdir -p site/basic site/advanced
-          cp examples/site/index.html site/index.html
-          cp -R examples/basic/dist/. site/basic/
-          cp -R examples/advanced/dist/. site/advanced/
+        run: .github/scripts/assemble-pages-site.sh
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
@@ -84,4 +79,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
