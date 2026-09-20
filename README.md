@@ -106,7 +106,7 @@ The example source and local run instructions are in [`examples/`](./examples/).
 
 ## Docs
 
-Deeper documentation (transitions, controlled mode, accessibility, headless controller) is in progress. Questions and requests are welcome on the [GitHub issues page](https://github.com/clalexander/flow-stack/issues).
+The published usage docs are at [clalexander.github.io/flow-stack](https://clalexander.github.io/flow-stack/). Deeper documentation (transitions, controlled mode, accessibility, headless controller) is in progress. Questions and requests are welcome on the [GitHub issues page](https://github.com/clalexander/flow-stack/issues).
 
 Contributor and maintainer documentation lives in [`docs/`](./docs/README.md).
 
@@ -137,7 +137,7 @@ Contributor and maintainer documentation lives in [`docs/`](./docs/README.md).
 
 ## Stability
 
-**Pre-release (0.x).** The public API is still evolving. Breaking changes may occur before `1.0.0`. Feedback on the API surface is welcome.
+**Actively maintained (1.x).** Flow Stack follows semantic versioning: breaking changes are released as a new major version, not folded into a minor or patch release. See [release operations](./docs/development/release.md) for the exact classification rules.
 
 # Contributing
 
