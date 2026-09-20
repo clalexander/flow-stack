@@ -20,8 +20,8 @@ Most React navigation libraries assume they own the URL or the full viewport. `f
 
 - **Push / pop / replace / reset** — full navigation action set with direction awareness
 - **Param-driven screens** — typed params per route, with optional defaults
-- **Route guards** — async `canEnter` / `canLeave` per route; return `false` (or a rejected promise) to block any navigation action
-- **Animated transitions** — 8 built-in presets, fully customisable via `translate`, `opacity`, `scale`, `easing`, `enterCurve`, `exitCurve`, `stagger`
+- **Route guards** — async `canEnter` / `canLeave` per route; return or resolve to `false` to block a navigation action
+- **Animated transitions** — 7 built-in presets, fully customisable via `translate`, `opacity`, `scale`, `easing`, `enterCurve`, `exitCurve`, `stagger`
 - **Priority-aware transition resolution** — stack → route → action, with timing and style merged independently so `duration` set at the stack level survives a string preset at the route level
 - **Reduced motion** — `reducedMotion` prop on the provider; respects `prefers-reduced-motion` by default
 - **Multiple independent stacks** — mount as many `NavigationStackProvider` instances as you need; each is fully isolated and identified by its `id`
@@ -106,7 +106,7 @@ The example source and local run instructions are in [`examples/`](./examples/).
 
 ## Docs
 
-The published usage docs are at [clalexander.github.io/flow-stack](https://clalexander.github.io/flow-stack/). Deeper documentation (transitions, controlled mode, accessibility, headless controller) is in progress. Questions and requests are welcome on the [GitHub issues page](https://github.com/clalexander/flow-stack/issues).
+The published usage and API documentation is at [clalexander.github.io/flow-stack](https://clalexander.github.io/flow-stack/). Questions and requests are welcome on the [GitHub issues page](https://github.com/clalexander/flow-stack/issues).
 
 Contributor and maintainer documentation lives in [`docs/`](./docs/README.md).
 

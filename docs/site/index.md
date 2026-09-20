@@ -1,15 +1,16 @@
 ---
-layout: home
+layout: default
 title: Flow Stack
+nav_order: 1
 ---
 
-Flow Stack is a React library for push/pop navigation inside an existing UI container — a sidebar, a sheet, a modal, an expandable panel, or any fixed-size region.
+**Container-native navigation for React.** Build push/pop flows inside a sidebar, sheet, modal, panel, or any fixed-size region without handing over the whole page.
 
 ## Get started
 
-- [Installation]({{ site.baseurl }}/installation/)
-- [Quick start]({{ site.baseurl }}/quick-start/)
-- [Core concepts]({{ site.baseurl }}/concepts/)
+- [Install Flow Stack]({{ site.baseurl }}/installation/)
+- [Build your first stack]({{ site.baseurl }}/quick-start/)
+- [Learn the core concepts]({{ site.baseurl }}/concepts/)
 
 ## Guides
 

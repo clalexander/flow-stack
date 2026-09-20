@@ -9,7 +9,7 @@ This is the canonical documentation for the Flow Stack repository. It is written
 - [Release operations](./development/release.md)
 - [CI modernization plan](./plans/flow-stack-ci-modernization-plan.md)
 
-Consumer-facing usage and the public API live in the root [README](../README.md). The contribution workflow lives in [CONTRIBUTING](../CONTRIBUTING.md).
+Consumer-facing usage and API documentation lives in [`docs/site/`](./site/) and is published to [GitHub Pages](https://clalexander.github.io/flow-stack/). The root [README](../README.md) provides the package overview. The contribution workflow lives in [CONTRIBUTING](../CONTRIBUTING.md).
 
 ## For Agents
 
@@ -24,5 +24,6 @@ Before making a non-trivial change:
 
 - `development/`: verification, dependency automation, and release operations.
 - `plans/`: historical records of completed plans, kept for context rather than as current instructions.
+- `site/`: consumer-facing guides and API reference built with the pinned Just the Docs remote theme.
 
 Other areas are added only when they carry real content.

@@ -1,5 +1,22 @@
 title: Flow Stack
-description: Stack-based navigation for React — designed to live inside a container, not own the page.
-theme: minima
+description: Container-native navigation for React.
 url: https://clalexander.github.io
 baseurl: /flow-stack
+
+remote_theme: just-the-docs/just-the-docs@v0.12.0
+plugins:
+  - jekyll-remote-theme
+
+color_scheme: flow-stack
+search_enabled: true
+heading_anchors: true
+
+aux_links:
+  Flow Stack on GitHub:
+    - https://github.com/clalexander/flow-stack
+aux_links_new_tab: true
+
+footer_content: 'Flow Stack is distributed under the <a href="https://github.com/clalexander/flow-stack/blob/main/LICENSE">MIT license</a>.'
+
+back_to_top: true
+back_to_top_text: Back to top
