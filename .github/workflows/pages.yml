@@ -56,14 +56,7 @@ jobs:
         run: node .github/scripts/build-pages-examples.ts
 
       - name: Assemble Pages site
-        run: |
-          for example in examples/*/; do
-            name="$(basename "$example")"
-            if [[ -d "${example}dist" ]]; then
-              mkdir -p "site/${name}"
-              cp -R "${example}dist/." "site/${name}/"
-            fi
-          done
+        run: .github/scripts/assemble-pages-site.sh
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
