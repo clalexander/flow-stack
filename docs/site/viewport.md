@@ -3,6 +3,7 @@ layout: default
 title: Viewport
 parent: Guides
 nav_order: 2
+permalink: /viewport/
 ---
 
 `NavigationStackViewport` renders the visible scenes and runs transitions. It is separate from the provider so it can be positioned anywhere in your layout.

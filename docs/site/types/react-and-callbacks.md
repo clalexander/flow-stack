@@ -4,6 +4,7 @@ title: React and callbacks
 parent: Type reference
 grand_parent: Reference
 nav_order: 5
+permalink: /types/react-and-callbacks/
 ---
 
 These contracts define component props, hook results, and lifecycle callback payloads.

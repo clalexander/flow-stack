@@ -4,6 +4,7 @@ title: Routes and guards
 parent: Type reference
 grand_parent: Reference
 nav_order: 3
+permalink: /types/routes-and-guards/
 ---
 
 Route types connect names and parameters to screen components. Guard and matcher types control whether and where navigation proceeds.
