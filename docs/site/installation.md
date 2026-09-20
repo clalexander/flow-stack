@@ -3,6 +3,7 @@ layout: default
 title: Installation
 parent: Get started
 nav_order: 1
+permalink: /installation/
 ---
 
 Add Flow Stack with the package manager used by your React application.

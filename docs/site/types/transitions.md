@@ -4,6 +4,7 @@ title: Transitions
 parent: Type reference
 grand_parent: Reference
 nav_order: 4
+permalink: /types/transitions/
 ---
 
 Transition types describe presets, custom animation endpoints, dynamic resolution, and live transition state.

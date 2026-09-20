@@ -3,6 +3,7 @@ layout: default
 title: Accessibility
 parent: Guides
 nav_order: 3
+permalink: /accessibility/
 ---
 
 Flow Stack provides focus, announcement, and reduced-motion controls while leaving screen semantics to your application.

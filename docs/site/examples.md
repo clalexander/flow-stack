@@ -2,6 +2,7 @@
 layout: default
 title: Examples
 nav_order: 4
+permalink: /examples/
 ---
 
 Use the examples to compare a minimal stack with a more configurable application.

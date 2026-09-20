@@ -3,6 +3,7 @@ layout: default
 title: Core concepts
 parent: Get started
 nav_order: 3
+permalink: /concepts/
 ---
 
 Flow Stack separates navigation state from scene rendering so each stack can live wherever your interface needs it.

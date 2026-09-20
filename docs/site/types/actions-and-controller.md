@@ -4,6 +4,7 @@ title: Actions and controller
 parent: Type reference
 grand_parent: Reference
 nav_order: 2
+permalink: /types/actions-and-controller/
 ---
 
 Actions describe state changes. The controller exposes typed methods for dispatching them and reading the current stack.

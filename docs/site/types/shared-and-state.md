@@ -4,6 +4,7 @@ title: Shared values and state
 parent: Type reference
 grand_parent: Reference
 nav_order: 1
+permalink: /types/shared-and-state/
 ---
 
 These types identify stacks and routes, configure common behavior, and represent stack snapshots.
