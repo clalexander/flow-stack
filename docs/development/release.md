@@ -75,14 +75,14 @@ The post-release sync pull request opens only when `main` is ahead of `dev`. Any
 
 ## Failure Recovery
 
-| Failure                           | Effect                                       | Action                                                                      |
-| --------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------- |
-| Verification fails                | Nothing is published                         | Fix the code and merge again                                                |
-| Advisory or signature audit fails | Release blocked before mutation              | Resolve the advisory or add a reviewed override                             |
-| App token creation fails          | No mutation occurs                           | Check App installation, variable, and secret; do not substitute a token     |
-| npm OIDC failure                  | Publish fails with no fallback               | Correct the trusted publisher or environment, then re-run                   |
-| Publish succeeded, commit failed  | npm has the version, `main` lacks the commit | Do not unpublish. Reconcile the repository, then release a corrective patch |
-| Promotion branch moved            | Workflow refuses to overwrite or delete      | Investigate manually; the exact commit is reported in the log               |
+| Failure                                             | Effect                                       | Action                                                                      |
+| --------------------------------------------------- | -------------------------------------------- | --------------------------------------------------------------------------- |
+| Verification fails                                  | Nothing is published                         | Fix the code and merge again                                                |
+| Fixable advisory, audit error, or signature failure | Release blocked before mutation              | Resolve the advisory or add a reviewed override                             |
+| App token creation fails                            | No mutation occurs                           | Check App installation, variable, and secret; do not substitute a token     |
+| npm OIDC failure                                    | Publish fails with no fallback               | Correct the trusted publisher or environment, then re-run                   |
+| Publish succeeded, commit failed                    | npm has the version, `main` lacks the commit | Do not unpublish. Reconcile the repository, then release a corrective patch |
+| Promotion branch moved                              | Workflow refuses to overwrite or delete      | Investigate manually; the exact commit is reported in the log               |
 
 ## Rollback Policy
 
