@@ -8,6 +8,6 @@ export default defineConfig({
   sourcemap: true,
   platform: 'neutral',
   deps: {
-    skipNodeModulesBundle: true,
+    neverBundle: true,
   },
 });
