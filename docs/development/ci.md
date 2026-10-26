@@ -21,7 +21,7 @@ Flow Stack has one authoritative verification contract. Pull requests and releas
 `verify.yml` runs four working jobs and one aggregate:
 
 1. **Prepare compatibility matrix** derives the supported React majors from package metadata.
-2. **Quality** installs with a frozen lockfile, audits dependencies, then checks formatting and lint.
+2. **Quality** installs with a frozen lockfile, reports all dependency advisories, blocks on fixable advisories and signature failures, then checks formatting and lint.
 3. **Examples** installs with a frozen lockfile and builds both Vite example packages.
 4. **Compatibility** runs typecheck, build, and tests across every supported Node and React combination with `fail-fast: false`.
 5. **Verification** is the stable aggregate. It runs with `if: always()` and succeeds only when every upstream job succeeded, so a failed, cancelled, or unexpectedly skipped job fails the check.
@@ -69,12 +69,15 @@ The React compatibility watcher checks npm monthly for a newer React major. When
 
 ## Supply-Chain Audits
 
-Quality runs two distinct, fail-closed controls:
+Quality runs three distinct steps:
 
-- `pnpm audit` reports known vulnerability advisories.
-- `npm audit signatures` verifies registry signatures and attestations.
+- **Report dependency vulnerabilities** runs `pnpm audit` and never blocks. When it finds advisories or errors, it adds a warning annotation and a run summary entry.
+- **Check fixable dependency vulnerabilities** runs `pnpm audit --ignore-unfixable` and blocks. Advisories with an available resolution and audit errors fail verification; advisories without a resolution do not.
+- **Verify dependency signatures** runs `npm audit signatures` and blocks.
 
-These are separate concerns. Do not merge them or rename one to describe the other.
+Vulnerability auditing and signature verification are separate concerns. Do not merge them or rename one to describe the other.
+
+Unfixable advisories still require review for exposure and possible mitigation, dependency removal, or replacement. Passing verification is not evidence that the dependency graph has no known vulnerabilities.
 
 Transitive advisories that have no direct upgrade path are pinned through `overrides` in `pnpm-workspace.yaml`.
 

@@ -66,8 +66,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit dependency vulnerabilities
-        run: pnpm audit
+      - name: Report dependency vulnerabilities
+        shell: bash
+        run: |
+          if pnpm audit; then
+            echo "No dependency vulnerabilities reported." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::Dependency audit reported vulnerabilities or an audit error. See this step's output and the fixable-vulnerability check."
+            echo "Dependency audit reported vulnerabilities or an audit error. See the audit output and the fixable-vulnerability check." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Check fixable dependency vulnerabilities
+        run: pnpm audit --ignore-unfixable
 
       - name: Verify dependency signatures
         run: npm audit signatures
