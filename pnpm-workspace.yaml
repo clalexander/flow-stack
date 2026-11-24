@@ -1,6 +1,11 @@
 packages:
   - examples/*
 
+# Every resolved version, including transitive ones, must be at least 2 days old: the shortest
+# Dependabot cooldown (patch updates). Setting it explicitly makes pnpm enforce it strictly.
+# Exceptions go in minimumReleaseAgeExclude as exact versions, each with a reason.
+minimumReleaseAge: 2880
+
 overrides:
   brace-expansion@^1: 1.1.18
   brace-expansion@^2: 2.1.4
