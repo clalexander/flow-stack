@@ -99,6 +99,15 @@ Compatibility holds live in two places and mean different things:
 
 Dependabot reads `.github/dependabot.yml` from the default branch. Changes to grouping take effect only after they land there.
 
+### Release Age
+
+Newly published versions wait before they can enter the lockfile:
+
+- Dependabot `cooldown` delays version updates. npm updates wait 3 days by default: 7 for majors, 3 for minors, and 2 for patches. GitHub Actions updates wait 3 days. A cooldown covers only the dependency being updated, and never security updates.
+- `minimumReleaseAge: 2880` in `pnpm-workspace.yaml` requires every resolved version, including transitive ones, to be at least 2 days old, matching the shortest cooldown. Because it is set explicitly, pnpm enforces it strictly: when no old-enough version satisfies a range, installation fails instead of falling back to a newer one.
+
+An exception goes in `minimumReleaseAgeExclude` as an exact version, with a comment giving the reason (typically a security fix that cannot wait). Never exclude a package by name alone.
+
 ### Promotion To `main`
 
 Merging either grouped pull request into `dev` triggers `dependency-release.yml`, which:
