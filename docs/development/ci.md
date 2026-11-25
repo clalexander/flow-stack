@@ -73,7 +73,7 @@ Quality runs three distinct steps:
 
 - **Report dependency vulnerabilities** runs `pnpm audit` and never blocks. When it finds advisories or errors, it adds a warning annotation and a run summary entry.
 - **Check fixable dependency vulnerabilities** runs `pnpm audit --ignore-unfixable` and blocks. Advisories with an available resolution and audit errors fail verification; advisories without a resolution do not. This needs pnpm 12.16.0 or later: earlier versions always exit 0, so the step could never fail.
-- **Verify dependency signatures** runs `npm audit signatures` and blocks.
+- **Verify dependency signatures** runs `npm audit signatures` and blocks. Registry transport faults (`FETCH_ERROR`, an invalid JSON response, `ECONNRESET`, `ETIMEDOUT`, `EAI_AGAIN`) are retried up to three attempts, 15 and 30 seconds apart, each with a warning annotation. Any other failure, including an invalid signature or attestation, fails on the first attempt.
 
 Vulnerability auditing and signature verification are separate concerns. Do not merge them or rename one to describe the other.
 

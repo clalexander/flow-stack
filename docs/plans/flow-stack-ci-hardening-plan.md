@@ -4,9 +4,9 @@
 >
 > Plan version: 1.1
 >
-> Revision: 2
+> Revision: 3
 >
-> Last updated: 2026-11-24
+> Last updated: 2026-11-25
 >
 > Repository/workspace: `clalexander/flow-stack`
 >
@@ -101,7 +101,7 @@ Every documented CI guarantee is enforced by configuration and proven by an obse
 
 | Phase | Conceptual Boundary                   | Test Scope                    | Dependencies   | Risk   | Status      | Stage A        | Stage B        | Stage C     | Backlog Progress | Authorization       | Acceptance   |
 | ----- | ------------------------------------- | ----------------------------- | -------------- | ------ | ----------- | -------------- | -------------- | ----------- | ---------------- | ------------------- | ------------ |
-| 1     | Supply-chain gates                    | NONE (CI run evidence; Q-002) | None           | Medium | IN PROGRESS | NOT APPLICABLE | NOT APPLICABLE | IN PROGRESS | 3 / 6 complete   | Received 2026-11-24 | Not received |
+| 1     | Supply-chain gates                    | NONE (CI run evidence; Q-002) | None           | Medium | IN PROGRESS | NOT APPLICABLE | NOT APPLICABLE | IN PROGRESS | 4 / 6 complete   | Received 2026-11-24 | Not received |
 | 2     | Release runtime and automation        | NONE (CI run evidence; Q-002) | Phase 1        | Medium | NOT STARTED | NOT APPLICABLE | NOT APPLICABLE | NOT STARTED | 0 / 5 complete   | Not received        | Not received |
 | 3     | Documentation alignment and promotion | NONE                          | Phases 1-2     | Low    | NOT STARTED | NOT APPLICABLE | NOT APPLICABLE | NOT STARTED | 0 / 3 complete   | Not received        | Not received |
 | 4     | Enforcement and controlled acceptance | NONE (controlled rule tests)  | Phase 3; Q-001 | High   | NOT STARTED | NOT APPLICABLE | NOT APPLICABLE | NOT STARTED | 0 / 5 complete   | Not received        | Not received |
@@ -329,8 +329,8 @@ The vulnerability, release-age, and signature gates enforce what `ci.md` documen
 | P1-T001 | Explicit release age and Actions cooldown                     | FR-003, FR-004 | 1.1  | None           | PR 1a          | Green CI; config review | DONE (#91)             |
 | P1-T002 | Document release age                                          | PR-004         | 1.1  | P1-T001        | `ci.md`        | Diff                    | DONE (#91)             |
 | P1-T003 | Upgrade pnpm (DEC-003) and prove the gate fails               | FR-001, TR-002 | 1.2  | P1-T001 merged | PR 1b commit 1 | Red Quality run         | DONE (run 45471207852) |
-| P1-T004 | Remediate advisories (DEC-004, DEC-005) and document the gate | FR-002, PR-004 | 1.2  | P1-T003        | PR 1b commit 2 | Green CI                | IN PROGRESS            |
-| P1-T005 | Signature retry (DEC-006)                                     | FR-005         | 1.3  | None           | PR 1c          | Green CI; review        | NOT STARTED            |
+| P1-T004 | Remediate advisories (DEC-004, DEC-005) and document the gate | FR-002, PR-004 | 1.2  | P1-T003        | PR 1b commit 2 | Green CI                | DONE (#92)             |
+| P1-T005 | Signature retry (DEC-006)                                     | FR-005         | 1.3  | None           | PR 1c          | Green CI; review        | IN PROGRESS            |
 | P1-T006 | Record evidence and close out                                 | TR-001         | —    | All            | This plan      | Closeout                | NOT STARTED            |
 
 ### File Allowlist
@@ -473,3 +473,4 @@ Every phase is accepted. AC-001 to AC-006 are evidenced. DISC-001 to DISC-005 ar
 | -------- | ------------ | ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
 | 1        | 1.0          | 2026-11-24 | IN PROGRESS | Initial plan from the #87 release findings; D1, D2, D4, D5 recorded; Phase 1 authorized                                                           | Maintainer direction; agent |
 | 2        | 1.1          | 2026-11-24 | IN PROGRESS | P1-T001 to P1-T003 done (#91; red run 45471207852); step 1.2 refresh command corrected for pnpm 12.22.0, including its `package.json` side effect | Implementation evidence     |
+| 3        | 1.1          | 2026-11-25 | IN PROGRESS | P1-T004 done (#92; red run 45471207852, green run 45637810393); P1-T005 in progress                                                               | Implementation evidence     |
