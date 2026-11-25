@@ -80,7 +80,35 @@ jobs:
         run: pnpm audit --ignore-unfixable
 
       - name: Verify dependency signatures
-        run: npm audit signatures
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Retry registry transport faults only. Any other failure, including an invalid
+          # signature or attestation, fails on the first attempt.
+          transient='FETCH_ERROR|invalid json response body|ECONNRESET|ETIMEDOUT|EAI_AGAIN'
+          max_attempts=3
+
+          for attempt in $(seq 1 "$max_attempts"); do
+            echo "Attempt $attempt of $max_attempts"
+            if output="$(npm audit signatures 2>&1)"; then
+              printf '%s\n' "$output"
+              exit 0
+            fi
+            printf '%s\n' "$output"
+
+            if ! grep -Eq "$transient" <<< "$output"; then
+              exit 1
+            fi
+            if [ "$attempt" -eq "$max_attempts" ]; then
+              echo "::error::Signature verification hit registry fetch errors on all $max_attempts attempts."
+              exit 1
+            fi
+
+            delay=$((15 * attempt))
+            echo "::warning::Signature verification attempt $attempt hit a registry fetch error. Retrying in ${delay}s."
+            sleep "$delay"
+          done
 
       - name: Check formatting
         run: pnpm run format:check
