@@ -6,16 +6,28 @@ packages:
 # Exceptions go in minimumReleaseAgeExclude as exact versions, each with a reason.
 minimumReleaseAge: 2880
 
+audit:
+  ignore:
+    # minimatch 9 via eslint-plugin-sort-exports. The only fix is minimatch 11, two majors ahead.
+    # Exposure is lint-time globs from repository config. Remove once eslint-plugin-sort-exports
+    # supports minimatch >=11.0.1, or is replaced.
+    - GHSA-g3hv-75wg-m249
+
 overrides:
-  brace-expansion@^1: 1.1.18
-  brace-expansion@^2: 2.1.4
-  brace-expansion@^5: 5.0.9
+  # Security floors are patched minimums, not exact pins, so later fixes still flow in. Remove a
+  # floor once every dependent requires a patched version.
+  # GHSA-6j4f-fj2g-mc7p, GHSA-qhr7-859c-m2p7, GHSA-q2hr-2g5m-vwhr, via minimatch 3, 9, and 11.
+  brace-expansion@^1: ^1.1.21
+  brace-expansion@^2: ^2.1.7
+  brace-expansion@^5: ^5.0.12
   browserslist: 4.28.8
   esbuild@<=0.24.2: ^0.25.0
   js-yaml@>=4.0.0 <4.3.2: ^4.3.2
   nanoid: 3.3.18
   postcss: 8.5.23
-  undici: 7.29.0
+  # 18 undici 7 advisories fixed by 7.30.1, via jsdom, @actions/http-client, and
+  # @semantic-release/github.
+  undici: ^7.30.1
   vite@<=6.4.1: ^6.4.2
   vite@<=6.4.2: ^6.4.3
 update:

@@ -2,9 +2,9 @@
 
 > Status: IN PROGRESS
 >
-> Plan version: 1.0
+> Plan version: 1.1
 >
-> Revision: 1
+> Revision: 2
 >
 > Last updated: 2026-11-24
 >
@@ -101,7 +101,7 @@ Every documented CI guarantee is enforced by configuration and proven by an obse
 
 | Phase | Conceptual Boundary                   | Test Scope                    | Dependencies   | Risk   | Status      | Stage A        | Stage B        | Stage C     | Backlog Progress | Authorization       | Acceptance   |
 | ----- | ------------------------------------- | ----------------------------- | -------------- | ------ | ----------- | -------------- | -------------- | ----------- | ---------------- | ------------------- | ------------ |
-| 1     | Supply-chain gates                    | NONE (CI run evidence; Q-002) | None           | Medium | IN PROGRESS | NOT APPLICABLE | NOT APPLICABLE | IN PROGRESS | 0 / 6 complete   | Received 2026-11-24 | Not received |
+| 1     | Supply-chain gates                    | NONE (CI run evidence; Q-002) | None           | Medium | IN PROGRESS | NOT APPLICABLE | NOT APPLICABLE | IN PROGRESS | 3 / 6 complete   | Received 2026-11-24 | Not received |
 | 2     | Release runtime and automation        | NONE (CI run evidence; Q-002) | Phase 1        | Medium | NOT STARTED | NOT APPLICABLE | NOT APPLICABLE | NOT STARTED | 0 / 5 complete   | Not received        | Not received |
 | 3     | Documentation alignment and promotion | NONE                          | Phases 1-2     | Low    | NOT STARTED | NOT APPLICABLE | NOT APPLICABLE | NOT STARTED | 0 / 3 complete   | Not received        | Not received |
 | 4     | Enforcement and controlled acceptance | NONE (controlled rule tests)  | Phase 3; Q-001 | High   | NOT STARTED | NOT APPLICABLE | NOT APPLICABLE | NOT STARTED | 0 / 5 complete   | Not received        | Not received |
@@ -324,14 +324,14 @@ The vulnerability, release-age, and signature gates enforce what `ci.md` documen
 
 ### Phase Task Backlog
 
-| Task ID | Task                                                          | Requirements   | Step | Dependencies   | Deliverable    | Verification            | Status      |
-| ------- | ------------------------------------------------------------- | -------------- | ---- | -------------- | -------------- | ----------------------- | ----------- |
-| P1-T001 | Explicit release age and Actions cooldown                     | FR-003, FR-004 | 1.1  | None           | PR 1a          | Green CI; config review | NOT STARTED |
-| P1-T002 | Document release age                                          | PR-004         | 1.1  | P1-T001        | `ci.md`        | Diff                    | NOT STARTED |
-| P1-T003 | Upgrade pnpm (DEC-003) and prove the gate fails               | FR-001, TR-002 | 1.2  | P1-T001 merged | PR 1b commit 1 | Red Quality run         | NOT STARTED |
-| P1-T004 | Remediate advisories (DEC-004, DEC-005) and document the gate | FR-002, PR-004 | 1.2  | P1-T003        | PR 1b commit 2 | Green CI                | NOT STARTED |
-| P1-T005 | Signature retry (DEC-006)                                     | FR-005         | 1.3  | None           | PR 1c          | Green CI; review        | NOT STARTED |
-| P1-T006 | Record evidence and close out                                 | TR-001         | —    | All            | This plan      | Closeout                | NOT STARTED |
+| Task ID | Task                                                          | Requirements   | Step | Dependencies   | Deliverable    | Verification            | Status                 |
+| ------- | ------------------------------------------------------------- | -------------- | ---- | -------------- | -------------- | ----------------------- | ---------------------- |
+| P1-T001 | Explicit release age and Actions cooldown                     | FR-003, FR-004 | 1.1  | None           | PR 1a          | Green CI; config review | DONE (#91)             |
+| P1-T002 | Document release age                                          | PR-004         | 1.1  | P1-T001        | `ci.md`        | Diff                    | DONE (#91)             |
+| P1-T003 | Upgrade pnpm (DEC-003) and prove the gate fails               | FR-001, TR-002 | 1.2  | P1-T001 merged | PR 1b commit 1 | Red Quality run         | DONE (run 45471207852) |
+| P1-T004 | Remediate advisories (DEC-004, DEC-005) and document the gate | FR-002, PR-004 | 1.2  | P1-T003        | PR 1b commit 2 | Green CI                | IN PROGRESS            |
+| P1-T005 | Signature retry (DEC-006)                                     | FR-005         | 1.3  | None           | PR 1c          | Green CI; review        | NOT STARTED            |
+| P1-T006 | Record evidence and close out                                 | TR-001         | —    | All            | This plan      | Closeout                | NOT STARTED            |
 
 ### File Allowlist
 
@@ -365,7 +365,7 @@ The vulnerability, release-age, and signature gates enforce what `ci.md` documen
 2. Commit 2, `build: remediate audit findings`:
    - apply the DEC-004 overrides, with reason and removal comments;
    - add `audit.ignore: [GHSA-g3hv-75wg-m249]` with its reason (DEC-005);
-   - refresh in-range transitive resolutions: `pnpm audit --fix=update --no-add-release-age-exclusions` (approval needed). Then confirm in the diff that only advisory-related entries moved, and that no `minimumReleaseAgeExclude` was added;
+   - refresh in-range transitive resolutions: `pnpm audit --fix=update` (approval needed; pnpm 12.22.0 has no `--no-add-release-age-exclusions` flag, so the strict `minimumReleaseAge` bounds the re-resolution). The command also raises direct `package.json` ranges to their locked versions; revert those and the matching lockfile `specifier` lines (denylist). Then confirm in the diff that only advisory-related entries moved, and that no `minimumReleaseAgeExclude` was added;
    - update `ci.md` "Supply-Chain Audits" with the pnpm floor and the ignore policy.
    - Push. **Expected: green.**
 3. Before pushing commit 2, check every version new to the lockfile against the cooldowns (PR-005).
@@ -469,6 +469,7 @@ Every phase is accepted. AC-001 to AC-006 are evidenced. DISC-001 to DISC-005 ar
 
 ## Appendix: Revision Log
 
-| Revision | Plan Version | Date       | Status      | Summary                                                                                 | Author/Source               |
-| -------- | ------------ | ---------- | ----------- | --------------------------------------------------------------------------------------- | --------------------------- |
-| 1        | 1.0          | 2026-11-24 | IN PROGRESS | Initial plan from the #87 release findings; D1, D2, D4, D5 recorded; Phase 1 authorized | Maintainer direction; agent |
+| Revision | Plan Version | Date       | Status      | Summary                                                                                                                                           | Author/Source               |
+| -------- | ------------ | ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| 1        | 1.0          | 2026-11-24 | IN PROGRESS | Initial plan from the #87 release findings; D1, D2, D4, D5 recorded; Phase 1 authorized                                                           | Maintainer direction; agent |
+| 2        | 1.1          | 2026-11-24 | IN PROGRESS | P1-T001 to P1-T003 done (#91; red run 45471207852); step 1.2 refresh command corrected for pnpm 12.22.0, including its `package.json` side effect | Implementation evidence     |
