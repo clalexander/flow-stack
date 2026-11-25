@@ -72,14 +72,20 @@ The React compatibility watcher checks npm monthly for a newer React major. When
 Quality runs three distinct steps:
 
 - **Report dependency vulnerabilities** runs `pnpm audit` and never blocks. When it finds advisories or errors, it adds a warning annotation and a run summary entry.
-- **Check fixable dependency vulnerabilities** runs `pnpm audit --ignore-unfixable` and blocks. Advisories with an available resolution and audit errors fail verification; advisories without a resolution do not.
+- **Check fixable dependency vulnerabilities** runs `pnpm audit --ignore-unfixable` and blocks. Advisories with an available resolution and audit errors fail verification; advisories without a resolution do not. This needs pnpm 12.16.0 or later: earlier versions always exit 0, so the step could never fail.
 - **Verify dependency signatures** runs `npm audit signatures` and blocks.
 
 Vulnerability auditing and signature verification are separate concerns. Do not merge them or rename one to describe the other.
 
 Unfixable advisories still require review for exposure and possible mitigation, dependency removal, or replacement. Passing verification is not evidence that the dependency graph has no known vulnerabilities.
 
-Transitive advisories that have no direct upgrade path are pinned through `overrides` in `pnpm-workspace.yaml`.
+Resolve a transitive advisory with the first option that works:
+
+1. Refresh the lockfile within the existing ranges with `pnpm audit --fix=update`. It also raises every direct dependency's `package.json` range to its locked version. That is a separate change, so revert it together with the matching `specifier` lines in `pnpm-lock.yaml`.
+2. When no allowed range reaches a patched version, add a security floor to `overrides` in `pnpm-workspace.yaml`: a patched minimum such as `^7.30.1`, never an exact pin, with a comment naming the advisories and when to remove the floor. Exact pins freeze a version, so later advisories against it stay unfixed.
+3. When no compatible fix exists, add the advisory ID to `audit.ignore` in `pnpm-workspace.yaml`, with a comment giving the exposure and the removal condition. Each entry is an accepted risk.
+
+Run locally, `pnpm audit --ignore-unfixable` also adds the advisories it skips to `audit.ignore`. Review that edit rather than committing it as is.
 
 ## Dependency Automation
 
