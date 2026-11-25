@@ -66,7 +66,7 @@ React support is declared once, in `peerDependencies.react` in `package.json`. `
 
 Node majors are explicit in the compatibility matrix because a minimum version in `engines.node` does not imply which majors to test.
 
-The release runtime is declared once, in `.github/release-node-version`. The release jobs and the **Release tooling** check read it through `node-version-file`, so they cannot drift apart.
+The release runtime is declared once, in `.nvmrc`. The release jobs and the **Release tooling** check read it through `node-version-file`, so they cannot drift apart, and local version managers such as nvm read the same file. Do not point `node-version-file` at `package.json`: `engines.node` is the range consumers can use, and setup-node resolves a range to the newest matching release.
 
 The React compatibility watcher checks npm monthly for a newer React major. When one exists, it updates `peerDependencies` and the README compatibility sentence, then opens a pull request to `dev`. It never edits workflow YAML and never changes `devDependencies`, so local development stays on the current baseline while the matrix exercises the candidate.
 
