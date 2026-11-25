@@ -18,13 +18,14 @@ Flow Stack has one authoritative verification contract. Pull requests and releas
 
 ## The Verification Contract
 
-`verify.yml` runs four working jobs and one aggregate:
+`verify.yml` runs five working jobs and one aggregate:
 
 1. **Prepare compatibility matrix** derives the supported React majors from package metadata.
 2. **Quality** installs with a frozen lockfile, reports all dependency advisories, blocks on fixable advisories and signature failures, then checks formatting and lint.
 3. **Examples** installs with a frozen lockfile and builds both Vite example packages.
 4. **Compatibility** runs typecheck, build, and tests across every supported Node and React combination with `fail-fast: false`.
-5. **Verification** is the stable aggregate. It runs with `if: always()` and succeeds only when every upstream job succeeded, so a failed, cancelled, or unexpectedly skipped job fails the check.
+5. **Release tooling** runs `semantic-release --version` on the release runtime. semantic-release checks its Node engine range first, so a release-tool upgrade that needs a newer runtime fails here instead of at release time.
+6. **Verification** is the stable aggregate. It runs with `if: always()` and succeeds only when every upstream job succeeded, so a failed, cancelled, or unexpectedly skipped job fails the check.
 
 `Verification` is a naming contract with branch protection. Renaming that job breaks required status checks.
 
@@ -64,6 +65,8 @@ GitHub only offers checks that have reported recently. If either is missing when
 React support is declared once, in `peerDependencies.react` in `package.json`. `react-dom` must carry the same range. The matrix job parses that range, so the supported majors are never duplicated in workflow YAML.
 
 Node majors are explicit in the compatibility matrix because a minimum version in `engines.node` does not imply which majors to test.
+
+The release runtime is declared once, in `.nvmrc`. The release jobs and the **Release tooling** check read it through `node-version-file`, so they cannot drift apart, and local version managers such as nvm read the same file. Do not point `node-version-file` at `package.json`: `engines.node` is the range consumers can use, and setup-node resolves a range to the newest matching release.
 
 The React compatibility watcher checks npm monthly for a newer React major. When one exists, it updates `peerDependencies` and the README compatibility sentence, then opens a pull request to `dev`. It never edits workflow YAML and never changes `devDependencies`, so local development stays on the current baseline while the matrix exercises the candidate.
 

@@ -54,7 +54,9 @@ Setup steps are recorded in the manual configuration runbook of the [CI moderniz
 
 If no commit warrants a release, the run is a successful no-op.
 
-The release commit is `chore(release): <version>`, which is classified as non-releasing, so it cannot cause a second release. It does re-trigger the workflow once; that run verifies and then no-ops. The generated-commit run also skips the back-merge job, preventing a duplicate synchronization attempt.
+The release jobs run on the Node version in `.nvmrc`. Pull request verification runs the same release tooling on that version, so an upgrade that the release runtime cannot run fails before it reaches `main`.
+
+The release commit is `chore(release): <version>`, which is classified as non-releasing, so it cannot cause a second release. It does re-trigger the workflow once. That run verifies, then skips the release job, so it never requests another `npm` environment approval, and it skips the back-merge job, preventing a duplicate synchronization attempt.
 
 ## Dry Run
 
