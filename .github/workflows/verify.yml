@@ -206,6 +206,36 @@ jobs:
             exit 1
           fi
 
+  release-tooling:
+    name: Release tooling
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .github/release-node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # semantic-release checks its Node engine range before parsing arguments, so this fails
+      # when the release runtime is too old for the locked release tooling.
+      - name: Check release tooling on the release runtime
+        run: pnpm exec semantic-release --version
+
   verification:
     name: Verification
     if: ${{ always() }}
@@ -214,6 +244,7 @@ jobs:
       - quality
       - compatibility
       - examples
+      - release-tooling
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -224,13 +255,15 @@ jobs:
           QUALITY_RESULT: ${{ needs.quality.result }}
           COMPATIBILITY_RESULT: ${{ needs.compatibility.result }}
           EXAMPLES_RESULT: ${{ needs.examples.result }}
+          RELEASE_TOOLING_RESULT: ${{ needs.release-tooling.result }}
         run: |
           failed=0
           for result in \
             "prepare=$PREPARE_RESULT" \
             "quality=$QUALITY_RESULT" \
             "compatibility=$COMPATIBILITY_RESULT" \
-            "examples=$EXAMPLES_RESULT"; do
+            "examples=$EXAMPLES_RESULT" \
+            "release-tooling=$RELEASE_TOOLING_RESULT"; do
             if [[ "${result#*=}" != "success" ]]; then
               echo "Required job did not succeed: $result" >&2
               failed=1

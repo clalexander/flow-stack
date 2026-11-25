@@ -26,9 +26,13 @@ jobs:
 
   release:
     name: Release
+    # A generated release commit cannot release again, so skip it rather than request another
+    # npm environment approval. Push events have no inputs, so each branch names its event.
     if: >-
-      ${{ github.event_name == 'push' ||
-      (!inputs.dry-run && github.ref == 'refs/heads/main') }}
+      ${{ (github.event_name == 'push' &&
+      !startsWith(github.event.head_commit.message, 'chore(release): ')) ||
+      (github.event_name == 'workflow_dispatch' &&
+      !inputs.dry-run && github.ref == 'refs/heads/main') }}
     needs: verify
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -51,7 +55,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 26
+          node-version-file: .github/release-node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -115,7 +119,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 26
+          node-version-file: .github/release-node-version
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 

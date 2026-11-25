@@ -2,9 +2,9 @@
 
 > Status: IN PROGRESS
 >
-> Plan version: 1.1
+> Plan version: 1.2
 >
-> Revision: 3
+> Revision: 4
 >
 > Last updated: 2026-11-25
 >
@@ -99,26 +99,27 @@ Every documented CI guarantee is enforced by configuration and proven by an obse
 
 ## Phase Summary
 
-| Phase | Conceptual Boundary                   | Test Scope                    | Dependencies   | Risk   | Status      | Stage A        | Stage B        | Stage C     | Backlog Progress | Authorization       | Acceptance   |
-| ----- | ------------------------------------- | ----------------------------- | -------------- | ------ | ----------- | -------------- | -------------- | ----------- | ---------------- | ------------------- | ------------ |
-| 1     | Supply-chain gates                    | NONE (CI run evidence; Q-002) | None           | Medium | IN PROGRESS | NOT APPLICABLE | NOT APPLICABLE | IN PROGRESS | 4 / 6 complete   | Received 2026-11-24 | Not received |
-| 2     | Release runtime and automation        | NONE (CI run evidence; Q-002) | Phase 1        | Medium | NOT STARTED | NOT APPLICABLE | NOT APPLICABLE | NOT STARTED | 0 / 5 complete   | Not received        | Not received |
-| 3     | Documentation alignment and promotion | NONE                          | Phases 1-2     | Low    | NOT STARTED | NOT APPLICABLE | NOT APPLICABLE | NOT STARTED | 0 / 3 complete   | Not received        | Not received |
-| 4     | Enforcement and controlled acceptance | NONE (controlled rule tests)  | Phase 3; Q-001 | High   | NOT STARTED | NOT APPLICABLE | NOT APPLICABLE | NOT STARTED | 0 / 5 complete   | Not received        | Not received |
+| Phase | Conceptual Boundary                   | Test Scope                   | Dependencies   | Risk   | Status      | Stage A        | Stage B        | Stage C     | Backlog Progress | Authorization       | Acceptance          |
+| ----- | ------------------------------------- | ---------------------------- | -------------- | ------ | ----------- | -------------- | -------------- | ----------- | ---------------- | ------------------- | ------------------- |
+| 1     | Supply-chain gates                    | NONE (CI run evidence)       | None           | Medium | COMPLETE    | NOT APPLICABLE | NOT APPLICABLE | COMPLETE    | 6 / 6 complete   | Received 2026-11-24 | Received 2026-11-25 |
+| 2     | Release runtime and automation        | NONE (CI run evidence)       | Phase 1        | Medium | IN PROGRESS | NOT APPLICABLE | NOT APPLICABLE | IN PROGRESS | 0 / 5 complete   | Received 2026-11-25 | Not received        |
+| 3     | Documentation alignment and promotion | NONE                         | Phases 1-2     | Low    | NOT STARTED | NOT APPLICABLE | NOT APPLICABLE | NOT STARTED | 0 / 3 complete   | Not received        | Not received        |
+| 4     | Enforcement and controlled acceptance | NONE (controlled rule tests) | Phase 3; Q-001 | High   | NOT STARTED | NOT APPLICABLE | NOT APPLICABLE | NOT STARTED | 0 / 5 complete   | Not received        | Not received        |
 
 Stages A and B do not apply: the phases change configuration and workflows, not types or tested code.
 
 ## Requirement Sources
 
-| Source ID | Source                                                                                                     | Authority/Scope   | Relevant Material                                                                   |
-| --------- | ---------------------------------------------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------- |
-| SRC-000   | `plan-initiative` protocol                                                                                 | Process           | Phase gates, backlog control, reread                                                |
-| SRC-001   | Maintainer, 2026-11-24                                                                                     | Initiative        | CI issues 1-9 from the #87 release; decisions D1, D2, D4, D5; Phase 1 authorization |
-| SRC-002   | `docs/development/ci.md`, `docs/development/release.md`                                                    | Repository intent | Required checks, npm reviewer, audit gate, promotion                                |
-| SRC-003   | `flow-stack-ci-modernization-plan.md`                                                                      | Prior plan        | SR-008, M-002, M-004, P4-T004, P5-T003, P5-T004                                     |
-| SRC-004   | Workflows, `pnpm-workspace.yaml`, `.github/dependabot.yml`, rulesets, environments                         | Current behavior  | See Current-State Observations                                                      |
-| SRC-005   | pnpm release notes v12.3.0, v12.16.0; pnpm.io audit and settings docs; GitHub Dependabot options reference | Tool behavior     | Audit exit codes, release-age strictness, cooldown support                          |
-| SRC-006   | Maintainer rules: version control, environment safety, development                                         | Process           | Approval per action, no attribution, no environment changes without approval        |
+| Source ID | Source                                                                                                     | Authority/Scope   | Relevant Material                                                                            |
+| --------- | ---------------------------------------------------------------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------- |
+| SRC-000   | `plan-initiative` protocol                                                                                 | Process           | Phase gates, backlog control, reread                                                         |
+| SRC-001   | Maintainer, 2026-11-24                                                                                     | Initiative        | CI issues 1-9 from the #87 release; decisions D1, D2, D4, D5; Phase 1 authorization          |
+| SRC-002   | `docs/development/ci.md`, `docs/development/release.md`                                                    | Repository intent | Required checks, npm reviewer, audit gate, promotion                                         |
+| SRC-003   | `flow-stack-ci-modernization-plan.md`                                                                      | Prior plan        | SR-008, M-002, M-004, P4-T004, P5-T003, P5-T004                                              |
+| SRC-004   | Workflows, `pnpm-workspace.yaml`, `.github/dependabot.yml`, rulesets, environments                         | Current behavior  | See Current-State Observations                                                               |
+| SRC-005   | pnpm release notes v12.3.0, v12.16.0; pnpm.io audit and settings docs; GitHub Dependabot options reference | Tool behavior     | Audit exit codes, release-age strictness, cooldown support                                   |
+| SRC-006   | Maintainer rules: version control, environment safety, development                                         | Process           | Approval per action, no attribution, no environment changes without approval                 |
+| SRC-007   | Maintainer, 2026-11-25                                                                                     | Process           | Phase 1 accepted; Q-002 answered; Phase 2 authorized; PRs merge only after maintainer review |
 
 ## Active Requirements
 
@@ -163,6 +164,7 @@ Stages A and B do not apply: the phases change configuration and workflows, not 
 | PR-004 | Docs change in the same PR as the behavior they describe.                                                    | SRC-001 | Diff review              | ACTIVE |
 | PR-005 | Every adopted version meets the cooldown for its update type.                                                | SRC-001 | Age check in closeout    | ACTIVE |
 | PR-006 | Approval per git action, no AI attribution, and no environment change without approval of the exact command. | SRC-006 | Session record           | ACTIVE |
+| PR-007 | From Phase 2 on, a PR merges only after the maintainer approves it, in addition to TR-001.                   | SRC-007 | PR review record         | ACTIVE |
 
 ## Acceptance Criteria
 
@@ -193,10 +195,10 @@ Stages A and B do not apply: the phases change configuration and workflows, not 
 
 ## Material Open Questions
 
-| ID    | Question                                                                          | Why It Matters                                           | Owner      | Required Before  | Status |
-| ----- | --------------------------------------------------------------------------------- | -------------------------------------------------------- | ---------- | ---------------- | ------ |
-| Q-001 | Require linear history on `main` and `dev` (D3)?                                  | Conflicts with the merge-commit promotion and sync model | Maintainer | Phase 4          | OPEN   |
-| Q-002 | Confirm Test Scope NONE for all phases, with CI run evidence instead of new tests | Template requires a user-answered test scope             | Maintainer | Phase 1 closeout | OPEN   |
+| ID    | Question                                                                          | Why It Matters                                           | Owner      | Required Before  | Status                                   |
+| ----- | --------------------------------------------------------------------------------- | -------------------------------------------------------- | ---------- | ---------------- | ---------------------------------------- |
+| Q-001 | Require linear history on `main` and `dev` (D3)?                                  | Conflicts with the merge-commit promotion and sync model | Maintainer | Phase 4          | OPEN                                     |
+| Q-002 | Confirm Test Scope NONE for all phases, with CI run evidence instead of new tests | Template requires a user-answered test scope             | Maintainer | Phase 1 closeout | ANSWERED 2026-11-25: NONE for all phases |
 
 ## Terminology
 
@@ -291,12 +293,12 @@ flowchart LR
 
 ## Testing Strategy
 
-| Phase | Test Scope                            | Approved By / Date | Evidence              |
-| ----- | ------------------------------------- | ------------------ | --------------------- |
-| 1     | NONE: CI run evidence (Q-002 pending) | —                  | CASE-001, CASE-003    |
-| 2     | NONE: CI run evidence (Q-002 pending) | —                  | CASE-009              |
-| 3     | NONE                                  | —                  | Release and sync runs |
-| 4     | NONE: controlled rule tests           | —                  | P4-T003, P4-T005      |
+| Phase | Test Scope                  | Approved By / Date     | Evidence              |
+| ----- | --------------------------- | ---------------------- | --------------------- |
+| 1     | NONE: CI run evidence       | Maintainer, 2026-11-25 | CASE-001, CASE-003    |
+| 2     | NONE: CI run evidence       | Maintainer, 2026-11-25 | CASE-009              |
+| 3     | NONE                        | Maintainer, 2026-11-25 | Release and sync runs |
+| 4     | NONE: controlled rule tests | Maintainer, 2026-11-25 | P4-T003, P4-T005      |
 
 ## Validation Protocol
 
@@ -318,20 +320,20 @@ The vulnerability, release-age, and signature gates enforce what `ci.md` documen
 
 ### Status and Gate
 
-- Status: IN PROGRESS. Start authorized 2026-11-24.
+- Status: COMPLETE. Start authorized 2026-11-24; accepted 2026-11-25.
 - Exit requires: all tasks COMPLETE, AC-001 and AC-002 evidenced, and maintainer acceptance.
 - Mandatory stop: request Phase 2 authorization.
 
 ### Phase Task Backlog
 
-| Task ID | Task                                                          | Requirements   | Step | Dependencies   | Deliverable    | Verification            | Status                 |
-| ------- | ------------------------------------------------------------- | -------------- | ---- | -------------- | -------------- | ----------------------- | ---------------------- |
-| P1-T001 | Explicit release age and Actions cooldown                     | FR-003, FR-004 | 1.1  | None           | PR 1a          | Green CI; config review | DONE (#91)             |
-| P1-T002 | Document release age                                          | PR-004         | 1.1  | P1-T001        | `ci.md`        | Diff                    | DONE (#91)             |
-| P1-T003 | Upgrade pnpm (DEC-003) and prove the gate fails               | FR-001, TR-002 | 1.2  | P1-T001 merged | PR 1b commit 1 | Red Quality run         | DONE (run 45471207852) |
-| P1-T004 | Remediate advisories (DEC-004, DEC-005) and document the gate | FR-002, PR-004 | 1.2  | P1-T003        | PR 1b commit 2 | Green CI                | DONE (#92)             |
-| P1-T005 | Signature retry (DEC-006)                                     | FR-005         | 1.3  | None           | PR 1c          | Green CI; review        | IN PROGRESS            |
-| P1-T006 | Record evidence and close out                                 | TR-001         | —    | All            | This plan      | Closeout                | NOT STARTED            |
+| Task ID | Task                                                          | Requirements   | Step | Dependencies   | Deliverable    | Verification            | Status                     |
+| ------- | ------------------------------------------------------------- | -------------- | ---- | -------------- | -------------- | ----------------------- | -------------------------- |
+| P1-T001 | Explicit release age and Actions cooldown                     | FR-003, FR-004 | 1.1  | None           | PR 1a          | Green CI; config review | COMPLETE (#91)             |
+| P1-T002 | Document release age                                          | PR-004         | 1.1  | P1-T001        | `ci.md`        | Diff                    | COMPLETE (#91)             |
+| P1-T003 | Upgrade pnpm (DEC-003) and prove the gate fails               | FR-001, TR-002 | 1.2  | P1-T001 merged | PR 1b commit 1 | Red Quality run         | COMPLETE (run 45471207852) |
+| P1-T004 | Remediate advisories (DEC-004, DEC-005) and document the gate | FR-002, PR-004 | 1.2  | P1-T003        | PR 1b commit 2 | Green CI                | COMPLETE (#92)             |
+| P1-T005 | Signature retry (DEC-006)                                     | FR-005         | 1.3  | None           | PR 1c          | Green CI; review        | COMPLETE (#93)             |
+| P1-T006 | Record evidence and close out                                 | TR-001         | —    | All            | This plan      | Closeout                | COMPLETE                   |
 
 ### File Allowlist
 
@@ -383,6 +385,23 @@ Each PR reverts independently. Reverting PR 1b restores pnpm 12.3.1 and its non-
 - AC-001 and AC-002 are met, with run IDs recorded.
 - The Quality job reports no unaddressed advisory.
 
+### Closeout
+
+Accepted by the maintainer on 2026-11-25.
+
+| PR                                                              | Merge Commit | Evidence                                                                                                    |
+| --------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------- |
+| #91 `build: enforce a two-day minimum release age`              | `3e81398`    | Verify run 45468380819 green                                                                                |
+| #92 `build: upgrade pnpm and remediate audit findings`          | `64e4513`    | Red run 45471207852 (CASE-001: the gate exits 1 on 35 fixable advisories); green run 45637810393 (CASE-003) |
+| #93 `ci: retry signature verification on registry fetch errors` | `f0a3c1a`    | Green run 45640651564; CASE-006 to CASE-008 exercised against a stubbed `npm`                               |
+
+- AC-001 is met (runs 45471207852 and 45637810393). AC-002 is met (#91 and the `ci.md` "Release Age" section).
+- The Quality job reports no unaddressed advisory: only GHSA-g3hv-75wg-m249 remains, ignored under DEC-005.
+- PR-005: every version new to the lockfile met the cooldown for its update type. The youngest was source-map-js 1.2.4, at 5.3 days.
+- ASM-004 is confirmed: every compatibility job, including the `pnpm add` of each React major, passes under strict release age.
+- Deviation: pnpm 12.22.0 has no `--no-add-release-age-exclusions` flag. The refresh used `pnpm audit --fix=update`, and its `package.json` range bumps were reverted under the denylist.
+- Open: the Actions cooldown takes effect once this reaches `main` (Phase 3). ASM-001 is checked at the next Dependabot run.
+
 ## Phase 2: Release Runtime and Automation
 
 ### Goal
@@ -391,7 +410,7 @@ PR verification catches release-runtime breakage. Release runs need one approval
 
 ### Status and Gate
 
-- Status: NOT STARTED. Start requires explicit authorization.
+- Status: IN PROGRESS. Start authorized 2026-11-25. Each PR merges only after maintainer review (PR-007).
 - Prerequisite for P2-T004: the maintainer creates the Actions variable `RELEASE_AUTOMATION_CLIENT_ID` (the App's Client ID; not a secret).
 - Mandatory stop: request Phase 3 authorization.
 
@@ -399,11 +418,11 @@ PR verification catches release-runtime breakage. Release runs need one approval
 
 | Task ID | Task                                                                                                                                                                | Requirements   | Dependencies    | Deliverable                                               | Verification                                  | Status      |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | --------------- | --------------------------------------------------------- | --------------------------------------------- | ----------- |
-| P2-T001 | `.github/release-node-version` (`26`); release jobs use `node-version-file`; `Release tooling` job in `verify.yml` added to the aggregate's `needs` and result loop | FR-006, FR-007 | Phase 1         | PR 2a `ci: verify release tooling on the release runtime` | Red run with the file set to `24`, then green | NOT STARTED |
-| P2-T002 | Skip the release job for `chore(release): ` pushes (DEC-009)                                                                                                        | FR-009         | P2-T001         | PR 2a                                                     | Review; CASE-010 in Phase 4                   | NOT STARTED |
+| P2-T001 | `.github/release-node-version` (`26`); release jobs use `node-version-file`; `Release tooling` job in `verify.yml` added to the aggregate's `needs` and result loop | FR-006, FR-007 | Phase 1         | PR 2a `ci: verify release tooling on the release runtime` | Red run with the file set to `24`, then green | IN PROGRESS |
+| P2-T002 | Skip the release job for `chore(release): ` pushes (DEC-009)                                                                                                        | FR-009         | P2-T001         | PR 2a                                                     | Review; CASE-010 in Phase 4                   | IN PROGRESS |
 | P2-T003 | Add Node `'26'` to the matrix                                                                                                                                       | FR-008         | Phase 1         | PR 2b `ci: test node 26`                                  | Green matrix                                  | NOT STARTED |
 | P2-T004 | `client-id` in 4 token steps                                                                                                                                        | FR-010         | Variable exists | PR 2c `ci: authenticate app tokens with client-id`        | Token steps succeed in Phase 3 runs           | NOT STARTED |
-| P2-T005 | Update `ci.md` (verification contract, matrix) and `release.md` (prerequisites, release-commit skip) in the same PRs                                                | PR-004         | Each task       | Docs diffs                                                | Review                                        | NOT STARTED |
+| P2-T005 | Update `ci.md` (verification contract, matrix) and `release.md` (prerequisites, release-commit skip) in the same PRs                                                | PR-004         | Each task       | Docs diffs                                                | Review                                        | IN PROGRESS |
 
 File allowlist: `.github/release-node-version`, `.github/workflows/verify.yml`, `.github/workflows/release.yml`, `.github/workflows/dependency-release.yml`, `docs/development/ci.md`, `docs/development/release.md`, this plan.
 
@@ -465,12 +484,13 @@ Every phase is accepted. AC-001 to AC-006 are evidenced. DISC-001 to DISC-005 ar
 - [x] Decisions settled (D1, D2, D4, D5); Q-001 blocks Phase 4 only.
 - [x] Phases have backlogs, allowlists, gates, and stops; Phase Summary is a table.
 - [x] Validation uses repository scripts and CI evidence.
-- [ ] Test Scope confirmed (Q-002).
+- [x] Test Scope confirmed (Q-002).
 
 ## Appendix: Revision Log
 
-| Revision | Plan Version | Date       | Status      | Summary                                                                                                                                           | Author/Source               |
-| -------- | ------------ | ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| 1        | 1.0          | 2026-11-24 | IN PROGRESS | Initial plan from the #87 release findings; D1, D2, D4, D5 recorded; Phase 1 authorized                                                           | Maintainer direction; agent |
-| 2        | 1.1          | 2026-11-24 | IN PROGRESS | P1-T001 to P1-T003 done (#91; red run 45471207852); step 1.2 refresh command corrected for pnpm 12.22.0, including its `package.json` side effect | Implementation evidence     |
-| 3        | 1.1          | 2026-11-25 | IN PROGRESS | P1-T004 done (#92; red run 45471207852, green run 45637810393); P1-T005 in progress                                                               | Implementation evidence     |
+| Revision | Plan Version | Date       | Status      | Summary                                                                                                                                           | Author/Source                                 |
+| -------- | ------------ | ---------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| 1        | 1.0          | 2026-11-24 | IN PROGRESS | Initial plan from the #87 release findings; D1, D2, D4, D5 recorded; Phase 1 authorized                                                           | Maintainer direction; agent                   |
+| 2        | 1.1          | 2026-11-24 | IN PROGRESS | P1-T001 to P1-T003 done (#91; red run 45471207852); step 1.2 refresh command corrected for pnpm 12.22.0, including its `package.json` side effect | Implementation evidence                       |
+| 3        | 1.1          | 2026-11-25 | IN PROGRESS | P1-T004 done (#92; red run 45471207852, green run 45637810393); P1-T005 in progress                                                               | Implementation evidence                       |
+| 4        | 1.2          | 2026-11-25 | IN PROGRESS | Phase 1 accepted with closeout evidence; Q-002 answered (NONE); PR-007 added; Phase 2 authorized and started (PR 2a)                              | Maintainer direction; implementation evidence |
