@@ -10,7 +10,7 @@ Operational documentation for building, verifying, and releasing Flow Stack.
 
 ## Toolchain
 
-- Node: `engines.node` is `>=22.12.0`, and continuous integration verifies Node 22 and 24. `.nvmrc` names Node 26, the release runtime and the recommended local version.
+- Node: `engines.node` is `>=22.12.0`, and continuous integration verifies Node 22, 24, and 26. `.nvmrc` names Node 26, the release runtime and the recommended local version.
 - pnpm: pinned by `packageManager`. Use `corepack enable` rather than installing pnpm globally.
 - `pnpm-lock.yaml` is the authoritative lockfile. An ignored `package-lock.json` may exist locally and is not used.
 
