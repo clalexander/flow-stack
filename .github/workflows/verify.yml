@@ -158,6 +158,7 @@ jobs:
         node:
           - '22'
           - '24'
+          - '26'
         react: ${{ fromJSON(needs.prepare.outputs.react) }}
 
     steps:
